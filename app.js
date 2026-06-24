@@ -128,6 +128,25 @@ function flash(msg){
   clearTimeout(t._timer); t._timer = setTimeout(()=>t.style.display="none",1800);
 }
 
+/* ---------- toast-style confirm modal ---------- */
+function toastConfirm(msg){
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);";
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:28px 32px;min-width:320px;max-width:420px;box-shadow:0 12px 44px rgba(0,0,0,.4);text-align:center;font-family:'Segoe UI',Arial,sans-serif;">
+        <div style="font-size:15px;color:#1a1a1a;line-height:1.5;margin-bottom:20px;">${msg}</div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button id="tc-cancel" style="border:1px solid #ccc;background:#fff;color:#555;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Cancel</button>
+          <button id="tc-ok" style="border:none;background:#2f8fd0;color:#fff;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">OK</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#tc-ok").onclick = () => { overlay.remove(); resolve(true); };
+    overlay.querySelector("#tc-cancel").onclick = () => { overlay.remove(); resolve(false); };
+  });
+}
+
 /* ============================================================
    CUSTOM CONTENT PAGES — block editor
    (vanilla JS, event delegation, undo/redo, PDF-safe)
@@ -368,10 +387,11 @@ function addCustomPageEnd(){
   const pages = pagesWrap.querySelectorAll(":scope > .page");
   addPageAfter(pages[pages.length-1]);
 }
-function removePage(pageEl){
+async function removePage(pageEl){
   const pages = pagesWrap.querySelectorAll(":scope > .page");
   if(pages.length <= 1){ flash("Cannot delete the last page"); return; }
-  if(!confirm("Remove this page? (You can press Undo ↶ to bring it back.)")) return;
+  const ok = await toastConfirm("Remove this page? (You can press Undo ↶ to bring it back.)");
+  if(!ok) return;
   pageEl.remove();
   History.snapshot();
 }
@@ -767,8 +787,9 @@ function autoSave(){
 }
 
 /* start a fresh document and clear the restored/auto-saved session */
-function newProject(){
-  if(!confirm("Start a fresh document?\n\nThis clears the auto-saved session. Anything not saved with “Save Project” or “Editable PDF” will be lost.")) return;
+async function newProject(){
+  const ok = await toastConfirm("Start a fresh document?<br><br>This clears the auto-saved session. Anything not saved with \"Save Project\" or \"Editable PDF\" will be lost.");
+  if(!ok) return;
   try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){}
   location.reload();
 }
