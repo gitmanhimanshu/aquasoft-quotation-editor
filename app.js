@@ -348,6 +348,15 @@ function layoutDelRow(btn){
   else flash("At least one text row is required");
 }
 
+/* remove a page-6 icon (callout <i> icon, or bullet ::before star) */
+function removeIcon(btn){
+  const callout = btn.closest(".callout");
+  const li = btn.closest("li");
+  if(callout){ const ic = callout.querySelector("i"); if(ic) ic.remove(); btn.remove(); }
+  else if(li){ li.classList.add("no-bullet"); btn.remove(); }
+  History.snapshot();
+}
+
 /* ---- images (upload / replace) ---- */
 let imgPickCb = null;
 function pickImage(cb){ imgPickCb = cb; document.getElementById("imgInput").click(); }
@@ -592,6 +601,7 @@ document.addEventListener("click", e => {
     case "b-del":  delBlock(block);      break;
     /* image */
     case "img-pick": pickImageInto(btn); break;
+    case "rm-ico":   removeIcon(btn);    break;
     case "img-resize": break; /* handled by mousedown listener */
     case "imp-replace-bg": { const im = btn.closest(".page").querySelector("img.full"); if(im){ slotImg = im; imgPickCb = null; document.getElementById("imgInput").click(); } break; }
     /* image + text layout rows */
@@ -614,7 +624,7 @@ document.addEventListener("click", e => {
 /* snapshot on typing (debounced) */
 let _typeTimer = null;
 document.addEventListener("input", e => {
-  if(e.target.closest(".custom-content")){
+  if(e.target.closest(".epage")){            // any editable page (custom + brochure pages 1–8)
     clearTimeout(_typeTimer);
     _typeTimer = setTimeout(() => History.snapshot(), 700);
   }

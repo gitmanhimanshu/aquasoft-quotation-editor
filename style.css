@@ -168,6 +168,16 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
   margin-bottom:10px; padding-left:26px; position:relative; }
 .feat-bullets li::before{ content:"\f069"; font-family:"Font Awesome 6 Free"; font-weight:900;
   color:#2aa9e0; position:absolute; left:0; top:3px; font-size:13pt; }
+/* remove-icon (✕) buttons on page-6 callouts & bullets */
+.rm-ico{ background:#ffe3e3; color:#c0392b; border:1px solid #f3b4b4; border-radius:50%;
+  width:18px; height:18px; font-size:10px; font-weight:700; line-height:1; padding:0; cursor:pointer;
+  opacity:0; transition:opacity .15s; }
+.callout .rm-ico{ position:absolute; top:-9px; left:-9px; }
+.callout:hover .rm-ico{ opacity:1; }
+.feat-bullets li.no-bullet::before{ display:none; }
+.feat-bullets li.no-bullet{ padding-left:4px; }
+.feat-bullets li .rm-ico{ position:absolute; left:0; top:2px; }
+.feat-bullets li:hover .rm-ico{ opacity:1; }
 
 /* ---------- editor affordances ---------- */
 [contenteditable="true"]:hover{ outline:1px dashed #9bc0e2; }
