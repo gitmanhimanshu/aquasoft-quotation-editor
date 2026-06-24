@@ -13,7 +13,7 @@
 <!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=20260624k">
+<link rel="stylesheet" href="style.css?v=20260624o">
 </head>
 <body>
 
@@ -54,6 +54,7 @@
     <button data-action="fmt-underline" title="Underline"><u>U</u></button>
     <button data-action="font-bigger" title="Increase text size">A⏶</button>
     <button data-action="font-smaller" title="Decrease text size">A⏷</button>
+    <label class="ft-color" title="Text color">A<input type="color" id="textColor" value="#1c3f94"></label>
   </div>
   <div class="ft-group ft-align">
     <button data-action="align-left" title="Align left">◄</button>
@@ -61,6 +62,8 @@
     <button data-action="align-right" title="Align right">►</button>
   </div>
   <div class="ft-insert">
+    <button data-action="add-textbox" class="ft-textbox" title="Add a draggable text box to the current page">🆎 Text Box</button>
+    <button data-action="add-imagebox" class="ft-textbox" title="Add a draggable image to the current page">🖼️ Image Box</button>
     <button data-action="ins-heading">＋ Heading</button>
     <button data-action="ins-paragraph">＋ Text</button>
     <button data-action="ins-image">＋ Image</button>
@@ -286,6 +289,6 @@
 <div class="page"><img class="full" src="assets/pages/page_15.jpg" alt="Page 15"></div>
 <div class="page"><img class="full" src="assets/pages/page_16.jpg" alt="Page 16"></div>
 
-<script src="app.js?v=20260624k"></script>
+<script src="app.js?v=20260624o"></script>
 </body>
 </html>

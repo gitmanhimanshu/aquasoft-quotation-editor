@@ -357,6 +357,104 @@ function removeIcon(btn){
   History.snapshot();
 }
 
+/* ============================================================
+   FREE TEXT BOXES — add to any page, drag to position, resize
+   ============================================================ */
+/* the page the user is currently looking at = the one most visible in the viewport */
+function getActivePage(){
+  const pages = pagesWrap
+    ? Array.from(pagesWrap.querySelectorAll(":scope > .page"))
+    : Array.from(document.querySelectorAll(".page"));
+  if(!pages.length) return null;
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  let best = pages[0], bestVis = -1;
+  for(const p of pages){
+    const r = p.getBoundingClientRect();
+    const vis = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));   // visible height in viewport
+    if(vis > bestVis){ bestVis = vis; best = p; }
+  }
+  return best;
+}
+function floatBoxHTML(){
+  return `<div class="floatbox" style="left:25%;top:25%;width:38%;">`+
+    `<div class="fb-bar no-print"><span class="fb-move" data-action="fb-move" title="Drag to move">✥ Move</span><button class="fb-del" data-action="fb-del" title="Delete">✕</button></div>`+
+    `<div class="fb-text" contenteditable="true">Type your text here…</div>`+
+    `<span class="fb-resize no-print" data-action="fb-resize" title="Resize"></span>`+
+  `</div>`;
+}
+function addTextBoxToActivePage(){
+  const pg = getActivePage();
+  if(!pg){ flash("Open or click a page first"); return; }
+  if(getComputedStyle(pg).position === "static") pg.style.position = "relative";
+  const box = htmlToNode(floatBoxHTML());
+  pg.appendChild(box);
+  box.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  const t = box.querySelector(".fb-text"); if(t) t.focus();
+  flash("Text box added — drag the ✥ Move bar to position it");
+  History.snapshot();
+}
+/* ---- free draggable IMAGE box (same behaviour as the text box) ---- */
+function floatImgHTML(){
+  return `<div class="floatbox floatimg" style="left:25%;top:22%;width:38%;">`+
+    `<div class="fb-bar no-print"><span class="fb-move" data-action="fb-move" title="Drag to move">✥ Move</span><button class="fb-del" data-action="fb-del" title="Delete">✕</button></div>`+
+    `<div class="fb-img" data-action="fb-img-pick"><div class="fb-img-ph no-print">🖼️ Click to upload image</div></div>`+
+    `<span class="fb-resize no-print" data-action="fb-resize" title="Resize"></span>`+
+  `</div>`;
+}
+function pickFloatImage(el){
+  const cont = el.closest(".fb-img"); if(!cont) return;
+  pickImage(data => {
+    const ph = cont.querySelector(".fb-img-ph"); if(ph) ph.remove();
+    let img = cont.querySelector("img");
+    if(!img){ img = document.createElement("img"); cont.appendChild(img); }
+    img.src = data;
+    History.snapshot();
+  });
+}
+function addImageBoxToActivePage(){
+  const pg = getActivePage();
+  if(!pg){ flash("Open a page first"); return; }
+  if(getComputedStyle(pg).position === "static") pg.style.position = "relative";
+  const box = htmlToNode(floatImgHTML());
+  pg.appendChild(box);
+  box.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  flash("Image box added — drag the ✥ Move bar to position it");
+  History.snapshot();
+  pickFloatImage(box.querySelector(".fb-img"));   // open the upload dialog right away
+}
+
+/* drag a text/image box to reposition (within its page) */
+document.addEventListener("mousedown", e => {
+  const mv = e.target.closest(".fb-move");
+  if(!mv) return;
+  e.preventDefault();
+  const box  = mv.closest(".floatbox");
+  const page = box.closest(".page");
+  const pr = page.getBoundingClientRect(), br = box.getBoundingClientRect();
+  const dx = e.clientX - br.left, dy = e.clientY - br.top;
+  function move(ev){
+    const left = (ev.clientX - pr.left - dx) / pr.width  * 100;
+    const top  = (ev.clientY - pr.top  - dy) / pr.height * 100;
+    box.style.left = Math.max(0, Math.min(96, left)).toFixed(1) + "%";
+    box.style.top  = Math.max(0, Math.min(98, top)).toFixed(1) + "%";
+  }
+  function up(){ document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up); History.snapshot(); }
+  document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
+});
+/* resize a text box (width) */
+document.addEventListener("mousedown", e => {
+  const h = e.target.closest(".fb-resize");
+  if(!h) return;
+  e.preventDefault(); e.stopPropagation();
+  const box = h.closest(".floatbox");
+  const page = box.closest(".page");
+  const pw = page.clientWidth;
+  const startX = e.clientX, startW = box.offsetWidth;
+  function move(ev){ const w = startW + (ev.clientX - startX); box.style.width = Math.max(10, Math.min(98, (w / pw) * 100)).toFixed(1) + "%"; }
+  function up(){ document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up); History.snapshot(); }
+  document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
+});
+
 /* ---- images (upload / replace) ---- */
 let imgPickCb = null;
 function pickImage(cb){ imgPickCb = cb; document.getElementById("imgInput").click(); }
@@ -442,6 +540,37 @@ function adjustFontSize(delta){
   }
 }
 
+/* ---- text colour (save/restore selection: the colour picker steals focus) ---- */
+let savedRange = null;
+function saveSelection(){ const s = window.getSelection(); if(s && s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); }
+function restoreSelection(){
+  if(!savedRange) return;
+  let host = savedRange.commonAncestorContainer;
+  host = host.nodeType === 1 ? host : host.parentElement;
+  const ed = host && host.closest ? host.closest('[contenteditable="true"]') : null;
+  if(ed) ed.focus();
+  const s = window.getSelection(); s.removeAllRanges(); s.addRange(savedRange);
+}
+function applyTextColor(color){
+  restoreSelection();
+  const sel = window.getSelection();
+  if(sel && sel.rangeCount && !sel.isCollapsed){
+    document.execCommand("foreColor", false, color);
+  }else{
+    let el = document.activeElement;
+    el = (el && el.closest) ? el.closest('[contenteditable="true"]') : null;
+    if(!el && savedRange){ let h = savedRange.commonAncestorContainer; h = h.nodeType===1 ? h : h.parentElement; el = h && h.closest ? h.closest('[contenteditable="true"]') : null; }
+    if(el) el.style.color = color;
+  }
+  History.snapshot();
+}
+(function wireColorPicker(){
+  const tc = document.getElementById("textColor");
+  if(!tc) return;
+  tc.addEventListener("mousedown", saveSelection);   // grab selection before the picker steals focus
+  tc.addEventListener("input", e => applyTextColor(e.target.value));
+})();
+
 /* ============================================================
    UNDO / REDO  (snapshot the pages container)
    ============================================================ */
@@ -478,9 +607,9 @@ document.addEventListener("focusin", e => {
   if(c) activeContent = c;
 });
 
-/* keep text selection when clicking the floating toolbar */
+/* keep text selection when clicking the floating toolbar (but let inputs work) */
 document.addEventListener("mousedown", e => {
-  if(e.target.closest(".float-toolbar")) e.preventDefault();
+  if(e.target.closest(".float-toolbar") && !e.target.closest("input")) e.preventDefault();
 });
 
 /* image resize from any handle — corners + edges (top/bottom/left/right) */
@@ -636,6 +765,13 @@ document.addEventListener("click", e => {
     /* image */
     case "img-pick": pickImageInto(btn); break;
     case "rm-ico":   removeIcon(btn);    break;
+    /* free text / image boxes */
+    case "add-textbox":  addTextBoxToActivePage();   break;
+    case "add-imagebox": addImageBoxToActivePage();  break;
+    case "fb-img-pick":  pickFloatImage(btn);        break;
+    case "fb-del":   { const b = btn.closest(".floatbox"); if(b){ b.remove(); History.snapshot(); } break; }
+    case "fb-move":  break;   /* handled by mousedown */
+    case "fb-resize":break;   /* handled by mousedown */
     case "img-resize": break; /* handled by mousedown listener */
     case "imp-replace-bg": { const im = btn.closest(".page").querySelector("img.full"); if(im){ slotImg = im; imgPickCb = null; document.getElementById("imgInput").click(); } break; }
     /* image + text layout rows */

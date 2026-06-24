@@ -271,6 +271,31 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
   border-radius:6px; font-size:11px; padding:4px 12px; cursor:pointer; font-weight:600; }
 .layout-addrow:hover{ background:#dceaf6; }
 
+/* ---------- free draggable text boxes ---------- */
+.floatbox{ position:absolute; z-index:8; min-width:60px; }
+.fb-text{ outline:1px dashed transparent; padding:6px 9px; min-height:24px; background:transparent;
+  font-family:"Baloo 2","Segoe UI",sans-serif; font-size:13pt; color:#1c3f94; line-height:1.4; border-radius:3px; }
+.floatbox:hover .fb-text{ outline-color:#9bc0e2; }      /* show dashed border only on hover */
+.fb-text:focus{ outline:2px solid #2f8fd0; background:rgba(255,255,255,.6); }
+.fb-bar{ position:absolute; top:-22px; left:0; display:none; gap:4px; align-items:center; }
+.floatbox:hover .fb-bar, .floatbox:focus-within .fb-bar{ display:flex; }
+.fb-move{ background:#2f8fd0; color:#fff; font-size:11px; font-weight:600; padding:2px 9px;
+  border-radius:5px 5px 0 0; cursor:move; user-select:none; }
+.fb-del{ background:#c0392b; color:#fff; border:none; border-radius:4px; width:20px; height:20px;
+  cursor:pointer; font-size:11px; font-weight:700; line-height:1; }
+.fb-resize{ position:absolute; right:-6px; bottom:-6px; width:13px; height:13px; background:#2f8fd0;
+  border:2px solid #fff; border-radius:50%; cursor:nwse-resize; display:none; z-index:9; }
+.floatbox:hover .fb-resize{ display:block; }
+/* floating IMAGE box */
+.floatimg .fb-img{ cursor:pointer; }
+.floatimg .fb-img img{ width:100%; height:auto; display:block; border-radius:3px; }
+.fb-img-ph{ border:2px dashed #9bc0e2; color:#3a7cae; padding:30px 16px; text-align:center;
+  border-radius:8px; background:#f3f8fc; font-size:12pt; }
+@media print{
+  .fb-bar, .fb-resize, .fb-img-ph{ display:none !important; }
+  .fb-text{ outline:none !important; background:transparent !important; }
+}
+
 /* table block */
 .ctable{ width:100%; border-collapse:collapse; }
 .ctable td{ border:1px solid #9bb6d6; padding:6px 9px; font-size:12pt; min-width:32px; vertical-align:top; }
@@ -303,8 +328,13 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
   padding:6px 8px; font-size:12px; font-weight:600; cursor:pointer; line-height:1.1; }
 .float-toolbar button:hover{ background:#eaf4fb; }
 .ft-group button{ min-width:30px; }
+.ft-color{ display:inline-flex; align-items:center; gap:2px; border:1px solid #cfd8e3; border-radius:6px;
+  padding:3px 5px; font-size:12px; font-weight:700; color:#1f6fb0; cursor:pointer; background:#fff; }
+.ft-color input{ width:18px; height:18px; border:none; padding:0; background:none; cursor:pointer; }
 .ft-history button{ flex:1; }
 .ft-insert button{ width:100%; text-align:left; font-size:11px; padding:6px 7px; white-space:nowrap; }
+.ft-insert .ft-textbox{ grid-column:1 / -1; text-align:center; background:#eaf4fb; border-color:#2f8fd0; color:#1f6fb0; font-weight:700; }
+.ft-insert .ft-textbox:hover{ background:#dceaf6; }
 
 /* hide editor controls while capturing pages for Editable PDF */
 .exporting .no-print{ display:none !important; }
