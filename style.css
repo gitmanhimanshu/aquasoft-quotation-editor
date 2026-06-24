@@ -10,11 +10,13 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
 
 /* ---------- toolbar ---------- */
 .toolbar{ position:fixed; top:0; left:0; right:0; z-index:50; background:#fff; border-bottom:1px solid #d8d8d8;
-  display:flex; align-items:center; justify-content:space-between; padding:10px 16px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+  display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 16px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+.tb-left{ display:flex; align-items:center; white-space:nowrap; }
 .toolbar .hint{ color:#666; font-size:12px; margin-left:12px; }
-.tb-right{ display:flex; gap:8px; flex-wrap:wrap; }
+.tb-right{ display:flex; gap:7px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
 .toolbar button{ border:1px solid var(--headblue); background:#fff; color:var(--headblue2);
-  padding:7px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; }
+  padding:7px 11px; border-radius:6px; cursor:pointer; font-size:12.5px; font-weight:600;
+  white-space:nowrap; line-height:1.1; height:32px; }
 .toolbar button:hover{ background:#eaf4fb; }
 .toolbar button.primary{ background:var(--headblue); color:#fff; }
 
@@ -179,6 +181,79 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
 .addrow{ margin-top:6px; border:1px dashed var(--headblue); background:#eaf4fb; color:var(--headblue2);
   padding:5px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
 
+/* =========================================================
+   CUSTOM CONTENT PAGES (block editor)
+   ========================================================= */
+.custom-content{ position:relative; z-index:2; height:100%; overflow:hidden;
+  padding:40mm 16mm 40mm; font-family:"Baloo 2","Segoe UI",sans-serif; color:#1c3f94; }
+.custom-page .logo{ width:38mm; }
+
+/* blocks */
+.block{ position:relative; margin:0 0 12px; break-inside:avoid; }
+.block:last-child{ margin-bottom:0; }
+.block-tools{ position:absolute; top:-10px; right:0; gap:3px; z-index:12; display:none; }
+.block:hover > .block-tools, .block:focus-within > .block-tools{ display:flex; }
+.block-tools button{ border:none; background:#1f6fb0; color:#fff; width:23px; height:23px;
+  border-radius:5px; cursor:pointer; font-size:12px; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+.block-tools button:hover{ background:#0b5fa5; }
+.block-body h2{ font-family:"Baloo 2",sans-serif; font-size:21pt; font-weight:800; color:#26307e; margin:0; }
+.block-body p{ font-size:13.5pt; line-height:1.5; margin:0; }
+.block-body ul{ font-size:13.5pt; line-height:1.5; margin:0 0 0 22px; }
+.custom-content [contenteditable]:focus{ outline:2px solid #2f8fd0; outline-offset:2px; border-radius:3px; }
+
+/* columns */
+.cols{ display:flex; gap:16px; }
+.cols .col{ flex:1; font-size:12.5pt; line-height:1.45; min-height:24px; padding:2px; }
+.cols .col:hover{ outline:1px dashed #cfe0f0; }
+
+/* image block */
+.cimg{ position:relative; display:inline-block; max-width:100%; vertical-align:top; }
+.cimg img{ width:100%; display:block; border-radius:2px; }
+.cimg-placeholder{ border:2px dashed #9bc0e2; color:#3a7cae; padding:34px 20px; text-align:center;
+  cursor:pointer; border-radius:8px; background:#f3f8fc; font-size:12pt; min-width:200px; }
+.img-resize{ position:absolute; right:-8px; bottom:-8px; width:15px; height:15px; background:#2f8fd0;
+  border:2px solid #fff; border-radius:50%; cursor:nwse-resize; z-index:8; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+
+/* table block */
+.ctable{ width:100%; border-collapse:collapse; }
+.ctable td{ border:1px solid #9bb6d6; padding:6px 9px; font-size:12pt; min-width:32px; vertical-align:top; }
+.ctable tr:first-child td{ background:#eef4fb; font-weight:700; color:#1f6fb0; }
+.table-ctl{ margin-top:5px; display:flex; gap:6px; }
+.table-ctl button{ border:1px dashed #2f8fd0; background:#eaf4fb; color:#1f6fb0; border-radius:5px;
+  font-size:11px; padding:3px 9px; cursor:pointer; font-weight:600; }
+.table-ctl button:hover{ background:#dceaf6; }
+
+/* per-page controls */
+.page-tools{ position:absolute; bottom:7px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:30; }
+.page-tools button{ border:none; border-radius:6px; padding:5px 12px; font-size:12px; font-weight:700;
+  cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.25); }
+.page-tools .add-pg{ background:#1f9d55; color:#fff; }
+.page-tools .add-pg:hover{ background:#178244; }
+.page-tools .rm-pg{ background:#c0392b; color:#fff; }
+.page-tools .rm-pg:hover{ background:#a52f22; }
+
+/* floating block toolbar — vertical, left side */
+.float-toolbar{ position:fixed; left:12px; top:50%; transform:translateY(-50%); z-index:120;
+  width:150px; background:#fff; border:1px solid #d8d8d8; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.25);
+  display:flex; flex-direction:column; gap:8px; padding:10px; max-height:90vh; overflow:auto; }
+.ft-group{ display:flex; flex-wrap:wrap; gap:4px; justify-content:center; align-items:center;
+  padding-bottom:8px; border-bottom:1px solid #eee; }
+.ft-group:last-child{ border-bottom:none; padding-bottom:0; }
+.float-toolbar button{ border:1px solid #cfd8e3; background:#fff; color:#1f6fb0; border-radius:6px;
+  padding:5px 8px; font-size:12px; font-weight:600; cursor:pointer; }
+.float-toolbar button:hover{ background:#eaf4fb; }
+/* insert-block buttons fill the toolbar width (one per line) */
+.ft-group:nth-child(3) button{ flex:1 1 100%; text-align:left; }
+
+/* hide editor controls while capturing pages for Editable PDF */
+.exporting .no-print{ display:none !important; }
+.exporting .page{ box-shadow:none !important; }
+
+/* imported PDF pages (experimental) */
+.imported-page .full{ width:100%; height:100%; object-fit:fill; }
+.imported-overlay{ position:absolute; inset:0; z-index:3; background:transparent; padding:12mm; height:100%; overflow:hidden; }
+.imp-bg-btn{ position:absolute; top:8px; left:8px; z-index:20; }
+
 /* ---------- print ---------- */
 @page{ size:A4; margin:0; }
 @media print{
@@ -187,5 +262,10 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
   .page{ box-shadow:none; margin:0; page-break-after:always; break-after:page; }
   .page:last-child{ page-break-after:avoid; break-after:avoid; }
   [contenteditable="true"]:hover, [contenteditable="true"]:focus{ outline:none; background:transparent; }
+  .float-toolbar, .page-tools, .block-tools, .table-ctl, .img-resize, .cimg-placeholder{ display:none !important; }
+  .block{ break-inside:avoid; }
+  .custom-content{ overflow:hidden; }
+  .custom-content [contenteditable]:focus{ outline:none !important; }
+  .cols .col:hover{ outline:none !important; }
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
 }

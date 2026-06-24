@@ -8,6 +8,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- PDF.js (experimental "Import PDF" feature) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,16 +20,49 @@
 <!-- ===================== TOOLBAR ===================== -->
 <div class="toolbar no-print">
   <div class="tb-left">
-    <strong>📄 Aqua Soft — Brochure (16 pages)</strong>
-    <span class="hint">Editable: pages 1–8 · pages 9–16 fixed design · prices auto-total</span>
+    <strong>📄 Aqua Soft — Brochure Editor</strong>
   </div>
   <div class="tb-right">
-    <button onclick="saveLocal()">💾 Save</button>
+    <button onclick="newProject()">🆕 New</button>
+    <button onclick="addCustomPageEnd()">➕ Custom Page</button>
+    <button onclick="document.getElementById('pdfInput').click()">📄 Import PDF</button>
+    <button onclick="openProject()">📂 Open Project</button>
+    <button onclick="saveProject()">💾 Save Project</button>
+    <button onclick="exportEditablePDF()">📦 Editable PDF</button>
     <button class="primary" onclick="downloadPDF()">🧾 Download PDF</button>
   </div>
 </div>
 <input type="file" id="imgInput" accept="image/*" hidden>
 <input type="file" id="jsonInput" accept="application/json" hidden>
+<input type="file" id="projInput" accept=".aqs,.json,.pdf,application/json,application/pdf" hidden>
+<input type="file" id="pdfInput" accept="application/pdf,.pdf" hidden>
+
+<!-- ===================== FLOATING BLOCK TOOLBAR (custom pages) ===================== -->
+<div class="float-toolbar no-print" id="floatBar">
+  <div class="ft-group">
+    <button data-action="fmt-bold" title="Bold"><b>B</b></button>
+    <button data-action="fmt-italic" title="Italic"><i>I</i></button>
+    <button data-action="fmt-underline" title="Underline"><u>U</u></button>
+  </div>
+  <div class="ft-group">
+    <button data-action="align-left" title="Align left">⯇</button>
+    <button data-action="align-center" title="Center">▤</button>
+    <button data-action="align-right" title="Align right">⯈</button>
+  </div>
+  <div class="ft-group">
+    <button data-action="ins-heading">＋ Heading</button>
+    <button data-action="ins-paragraph">＋ Text</button>
+    <button data-action="ins-image">＋ Image</button>
+    <button data-action="ins-list">＋ List</button>
+    <button data-action="ins-cols2">＋ 2-Col</button>
+    <button data-action="ins-cols3">＋ 3-Col</button>
+    <button data-action="ins-table">＋ Table</button>
+  </div>
+  <div class="ft-group">
+    <button data-action="undo" title="Undo">↶</button>
+    <button data-action="redo" title="Redo">↷</button>
+  </div>
+</div>
 
 <!-- ===== PAGE 1 — COVER (editable: photo slot + text) ===== -->
 <div class="page">
