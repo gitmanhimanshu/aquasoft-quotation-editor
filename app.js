@@ -108,8 +108,15 @@ document.getElementById("jsonInput").addEventListener("change", e=>{
   r.readAsText(f); e.target.value = "";
 });
 
-/* ---------- PDF ---------- */
-function downloadPDF(){ window.print(); }
+/* ---------- PDF (browser print) ---------- */
+function downloadPDF(){
+  showLoader("Preparing print…");
+  setTimeout(() => {
+    try { window.print(); }      // blocking in Chrome/Edge: returns after dialog closes
+    finally { hideLoader(); }
+  }, 80);
+}
+window.addEventListener("afterprint", hideLoader);   // safety net for non-blocking browsers
 
 /* ---------- toast ---------- */
 function flash(msg){
@@ -436,6 +443,14 @@ document.addEventListener("keydown", e => {
 /* ============================================================
    PROJECT FILES  (Save Project / Open Project)  — .aqs / .json
    ============================================================ */
+/* ---- loading overlay ---- */
+function showLoader(msg){
+  const l = document.getElementById("loader"), m = document.getElementById("loaderMsg");
+  if(m) m.textContent = msg || "Working…";
+  if(l) l.classList.add("show");
+}
+function hideLoader(){ const l = document.getElementById("loader"); if(l) l.classList.remove("show"); }
+
 function download(text, filename, mime){
   const blob = new Blob([text], { type: mime || "application/octet-stream" });
   const url = URL.createObjectURL(blob);
@@ -459,12 +474,16 @@ function buildProject(){
   };
 }
 function saveProject(){
-  try{
-    const data = buildProject();
-    const stamp = new Date().toISOString().slice(0, 10);
-    download(JSON.stringify(data), "AquaSoft_Brochure_" + stamp + ".aqs", "application/json");
-    flash("Project saved ✓");
-  }catch(err){ flash("Could not save project"); }
+  showLoader("Saving project…");
+  setTimeout(() => {
+    try{
+      const data = buildProject();
+      const stamp = new Date().toISOString().slice(0, 10);
+      download(JSON.stringify(data), "AquaSoft_Brochure_" + stamp + ".aqs", "application/json");
+      flash("Project saved ✓");
+    }catch(err){ flash("Could not save project"); }
+    finally{ hideLoader(); }
+  }, 30);
 }
 function openProject(){ document.getElementById("projInput").click(); }
 function getMaxCustomSeq(){
@@ -488,7 +507,14 @@ document.getElementById("projInput").addEventListener("change", e => {
   const f = e.target.files[0]; e.target.value = ""; if(!f) return;
   if(/\.pdf$/i.test(f.name) || f.type === "application/pdf"){ openFromPDF(f); return; }
   const r = new FileReader();
-  r.onload = ev => { try { applyProject(JSON.parse(ev.target.result)); } catch(err){ flash("Could not read project file"); } };
+  r.onload = ev => {
+    showLoader("Opening project…");
+    setTimeout(() => {
+      try { applyProject(JSON.parse(ev.target.result)); }
+      catch(err){ flash("Could not read project file"); }
+      finally{ hideLoader(); }
+    }, 30);
+  };
   r.readAsText(f);
 });
 
@@ -509,8 +535,9 @@ function downloadBlob(blob, filename){
 
 async function exportEditablePDF(){
   if(!window.html2canvas || !window.jspdf){ flash("PDF engine still loading — try again"); return; }
-  flash("Building editable PDF… please wait");
+  showLoader("Building PDF… this can take a few seconds");
   document.body.classList.add("exporting");
+  await new Promise(r => setTimeout(r, 60));   // let the loader paint first
   try{
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
@@ -529,9 +556,9 @@ async function exportEditablePDF(){
     full.set(bytes, 0); full.set(payload, bytes.length);
     const stamp = new Date().toISOString().slice(0, 10);
     downloadBlob(new Blob([full], { type: "application/pdf" }), "AquaSoft_Brochure_" + stamp + ".pdf");
-    flash("Editable PDF saved ✓ (re-openable via Open Project)");
-  }catch(err){ flash("Could not build editable PDF"); }
-  finally{ document.body.classList.remove("exporting"); }
+    flash("PDF saved ✓ (re-openable via Open Project)");
+  }catch(err){ flash("Could not build PDF"); }
+  finally{ document.body.classList.remove("exporting"); hideLoader(); }
 }
 
 /* find a byte sequence inside a Uint8Array (search from the end) */
@@ -547,17 +574,19 @@ function indexOfBytes(hay, needleStr){
 /* open a PDF: if it carries embedded project data -> exact restore,
    else fall back to the visual reconstruction importer */
 async function openFromPDF(file){
+  showLoader("Opening PDF…");
   try{
     const bytes = new Uint8Array(await file.arrayBuffer());
     const at = indexOfBytes(bytes, AQS_MARKER);
     if(at >= 0){
       const jsonStr = new TextDecoder("utf-8").decode(bytes.slice(at + AQS_MARKER.length)).trim();
-      try{ applyProject(JSON.parse(jsonStr)); flash("Project restored from PDF ✓"); return; }
+      try{ applyProject(JSON.parse(jsonStr)); flash("Project restored from PDF ✓"); hideLoader(); return; }
       catch(e){ /* fall through to visual */ }
     }
+    hideLoader();
     flash("No editable data found in PDF — importing pages as images");
-    importPDF(file);
-  }catch(err){ flash("Could not open PDF"); }
+    await importPDF(file);   // manages its own loader
+  }catch(err){ flash("Could not open PDF"); hideLoader(); }
 }
 
 /* ============================================================
@@ -612,11 +641,13 @@ function createImportedPage(dataURL){
 }
 async function importPDF(file){
   if(!window.pdfjsLib){ flash("PDF engine still loading — try again in a moment"); return; }
-  flash("Importing PDF…");
+  showLoader("Importing PDF…");
+  await new Promise(r => setTimeout(r, 60));
   try{
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
     for(let i = 1; i <= pdf.numPages; i++){
+      showLoader("Importing PDF… page " + i + " / " + pdf.numPages);
       const page = await pdf.getPage(i);
       const viewport = page.getViewport({ scale: 2 });
       const canvas = document.createElement("canvas");
@@ -629,6 +660,7 @@ async function importPDF(file){
     History.snapshot();
     flash("PDF imported ✓ (" + pdf.numPages + " pages) — add text/images on top");
   }catch(err){ flash("Could not import PDF"); }
+  finally{ hideLoader(); }
 }
 document.getElementById("pdfInput").addEventListener("change", e => {
   const f = e.target.files[0]; e.target.value = ""; if(f) importPDF(f);

@@ -249,6 +249,19 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
 .exporting .no-print{ display:none !important; }
 .exporting .page{ box-shadow:none !important; }
 
+/* loading overlay (download / import) */
+#loader{ position:fixed; inset:0; z-index:300; background:rgba(15,25,50,.55); backdrop-filter:blur(1px);
+  display:none; align-items:center; justify-content:center; }
+#loader.show{ display:flex; }
+.loader-box{ background:#fff; border-radius:14px; padding:26px 36px; text-align:center;
+  box-shadow:0 12px 44px rgba(0,0,0,.4); min-width:240px; }
+.spinner{ width:48px; height:48px; border:5px solid #dceaf6; border-top-color:#2f8fd0;
+  border-radius:50%; margin:0 auto 16px; animation:aqsspin .8s linear infinite; }
+@keyframes aqsspin{ to{ transform:rotate(360deg); } }
+.loader-msg{ color:#1f6fb0; font-weight:700; font-size:14.5px; }
+.loader-sub{ color:#88a; font-size:11.5px; margin-top:6px; }
+@media print{ #loader{ display:none !important; } }
+
 /* imported PDF pages (experimental) */
 .imported-page .full{ width:100%; height:100%; object-fit:fill; }
 .imported-overlay{ position:absolute; inset:0; z-index:3; background:transparent; padding:12mm; height:100%; overflow:hidden; }

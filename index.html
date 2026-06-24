@@ -13,7 +13,7 @@
 <!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=20260624">
+<link rel="stylesheet" href="style.css?v=20260624c">
 </head>
 <body>
 
@@ -29,13 +29,22 @@
     <button onclick="openProject()">📂 Open Project</button>
     <button onclick="saveProject()">💾 Save Project</button>
     <button onclick="exportEditablePDF()">📦 Download PDF</button>
-    <!-- <button class="primary" onclick="downloadPDF()">🧾 Download PDF</button> -->
+    <button class="primary" onclick="downloadPDF()">🧾 Non-Editable PDF</button>
   </div>
 </div>
 <input type="file" id="imgInput" accept="image/*" hidden>
 <input type="file" id="jsonInput" accept="application/json" hidden>
 <input type="file" id="projInput" accept=".aqs,.json,.pdf,application/json,application/pdf" hidden>
 <input type="file" id="pdfInput" accept="application/pdf,.pdf" hidden>
+
+<!-- ===================== LOADING OVERLAY ===================== -->
+<div id="loader">
+  <div class="loader-box">
+    <div class="spinner"></div>
+    <div class="loader-msg" id="loaderMsg">Working…</div>
+    <div class="loader-sub">Please wait, do not close this tab</div>
+  </div>
+</div>
 
 <!-- ===================== FLOATING BLOCK TOOLBAR (custom pages) ===================== -->
 <div class="float-toolbar no-print" id="floatBar">
@@ -272,6 +281,6 @@
 <div class="page"><img class="full" src="assets/pages/page_15.jpg" alt="Page 15"></div>
 <div class="page"><img class="full" src="assets/pages/page_16.jpg" alt="Page 16"></div>
 
-<script src="app.js?v=20260624"></script>
+<script src="app.js?v=20260624c"></script>
 </body>
 </html>
