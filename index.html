@@ -13,7 +13,7 @@
 <!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=20260624o">
+<link rel="stylesheet" href="style.css?v=20260624q">
 </head>
 <body>
 
@@ -259,21 +259,22 @@
     <div class="cp-box">
       <div class="cp-title big-cursive"><span class="dash"></span><i contenteditable="true">Terms &amp; Conditions</i><span class="dash"></span></div>
       <div class="terms">
-        <h4 contenteditable="true">Payment Terms :</h4>
+        <h4 contenteditable="true">Payment Terms :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
         <ul>
-          <li contenteditable="true">50% Advance at the time of Order Booking.</li>
-          <li contenteditable="true">50% at the time of Dispatch against Performa Invoice.</li>
-          <li contenteditable="true">All taxes extra.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>50% Advance at the time of Order Booking.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>50% at the time of Dispatch against Performa Invoice.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>All taxes extra.</li>
         </ul>
-        <h4 contenteditable="true">Delivery :</h4>
-        <ul><li contenteditable="true">In approx. two to three weeks from the date of all technical clarifications and freezing of the scope of work and your firm order with advance.</li></ul>
-        <h4 contenteditable="true">Warranty :</h4>
+        <h4 contenteditable="true">Delivery :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
+        <ul><li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>In approx. two to three weeks from the date of all technical clarifications and freezing of the scope of work and your firm order with advance.</li></ul>
+        <h4 contenteditable="true">Warranty :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
         <ul>
-          <li contenteditable="true">12 months from the date of commissioning against any manufacturing defect in the equipment.</li>
-          <li contenteditable="true">Component Subject to wear, such as prefilter candle, activated carbon, Anti Scalent and membrane are not covered under this warranty.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>12 months from the date of commissioning against any manufacturing defect in the equipment.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>Component Subject to wear, such as prefilter candle, activated carbon, Anti Scalent and membrane are not covered under this warranty.</li>
         </ul>
-        <h4 contenteditable="true">Validity :</h4>
-        <ul><li contenteditable="true">Our offer is valid for a period of 30 days from the date.</li></ul>
+        <h4 contenteditable="true">Validity :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
+        <ul><li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>Our offer is valid for a period of 30 days from the date.</li></ul>
+        <button class="terms-addsec no-print" data-action="terms-addsec" title="Add a new heading with a row">＋ Add Heading + Row</button>
       </div>
     </div>
   </div>
@@ -289,6 +290,6 @@
 <div class="page"><img class="full" src="assets/pages/page_15.jpg" alt="Page 15"></div>
 <div class="page"><img class="full" src="assets/pages/page_16.jpg" alt="Page 16"></div>
 
-<script src="app.js?v=20260624o"></script>
+<script src="app.js?v=20260624q"></script>
 </body>
 </html>

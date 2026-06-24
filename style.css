@@ -130,6 +130,29 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
 .terms li{ position:relative; padding-left:28px; font-size:13.5pt; color:#222; margin-bottom:6px; line-height:1.4; }
 .terms li::before{ content:"\f164"; font-family:"Font Awesome 6 Free"; font-weight:900; color:#1f6fb0;
   position:absolute; left:0; top:2px; font-size:13pt; }
+/* "+" add-row button on each terms row (shows on hover, left margin) */
+.terms-add{ position:absolute; left:-22px; top:1px; width:18px; height:18px; border:none; border-radius:50%;
+  background:#dcf5e3; color:#1f9d55; font-weight:700; font-size:13px; line-height:1; cursor:pointer; padding:0;
+  opacity:0; transition:opacity .12s; }
+.terms li:hover .terms-add{ opacity:1; }
+.terms-add:hover{ background:#bdeccb; }
+/* delete-row (✕) at the right of each terms row */
+.terms-del{ position:absolute; right:-2px; top:1px; width:18px; height:18px; border:none; border-radius:50%;
+  background:#ffe3e3; color:#c0392b; font-weight:700; font-size:11px; line-height:1; cursor:pointer; padding:0;
+  opacity:0; transition:opacity .12s; }
+.terms li:hover .terms-del{ opacity:1; }
+.terms-del:hover{ background:#ffc9c9; }
+/* delete-heading (✕) at the right of each heading */
+.terms h4{ position:relative; }
+.terms-delsec{ position:absolute; right:0; top:50%; transform:translateY(-50%); width:18px; height:18px; border:none;
+  border-radius:50%; background:#ffe3e3; color:#c0392b; font-weight:700; font-size:11px; line-height:1; cursor:pointer;
+  padding:0; opacity:0; transition:opacity .12s; }
+.terms h4:hover .terms-delsec{ opacity:1; }
+.terms-delsec:hover{ background:#ffc9c9; }
+/* "+ Add Heading" button */
+.terms-addsec{ margin-top:10px; border:1px dashed #2f8fd0; background:#eaf4fb; color:#1f6fb0; border-radius:6px;
+  font-size:12px; padding:5px 12px; cursor:pointer; font-weight:600; }
+.terms-addsec:hover{ background:#dceaf6; }
 .why p{ font-size:12.5pt; color:#222; line-height:1.5; margin-bottom:8px; text-align:justify; }
 .why h4{ font-size:14pt; }
 

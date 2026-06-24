@@ -357,6 +357,48 @@ function removeIcon(btn){
   History.snapshot();
 }
 
+/* page 8 (Terms) — add / delete rows & heading sections */
+function termsRowHTML(text){
+  return `<li contenteditable="true">`+
+    `<button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button>`+
+    `<button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>`+
+    `${text || "New point"}</li>`;
+}
+function termsHeadingHTML(text){
+  return `<h4 contenteditable="true">${text || "New Heading :"}`+
+    `<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading & its rows">✕</button></h4>`;
+}
+function termsAddRow(btn){
+  const li = btn.closest("li");
+  if(!li) return;
+  li.insertAdjacentHTML("afterend", termsRowHTML());
+  if(li.nextElementSibling) li.nextElementSibling.focus();
+  History.snapshot();
+}
+function termsDelRow(btn){
+  const li = btn.closest("li");
+  if(li){ li.remove(); History.snapshot(); }
+}
+function termsAddSection(btn){
+  const terms = btn.closest(".terms");
+  if(!terms) return;
+  const h4 = htmlToNode(termsHeadingHTML("New Heading :"));
+  const ul = htmlToNode(`<ul>${termsRowHTML("New point")}</ul>`);
+  terms.insertBefore(h4, btn);   // keep the "Add Heading" button last
+  terms.insertBefore(ul, btn);
+  h4.focus();
+  History.snapshot();
+}
+function termsDelSection(btn){
+  const h4 = btn.closest("h4");
+  if(!h4) return;
+  if(!confirm("Delete this heading and all its rows?")) return;
+  const ul = h4.nextElementSibling;
+  if(ul && ul.tagName === "UL") ul.remove();
+  h4.remove();
+  History.snapshot();
+}
+
 /* ============================================================
    FREE TEXT BOXES — add to any page, drag to position, resize
    ============================================================ */
@@ -765,6 +807,10 @@ document.addEventListener("click", e => {
     /* image */
     case "img-pick": pickImageInto(btn); break;
     case "rm-ico":   removeIcon(btn);    break;
+    case "terms-addrow": termsAddRow(btn); break;
+    case "terms-delrow": termsDelRow(btn); break;
+    case "terms-addsec": termsAddSection(btn); break;
+    case "terms-delsec": termsDelSection(btn); break;
     /* free text / image boxes */
     case "add-textbox":  addTextBoxToActivePage();   break;
     case "add-imagebox": addImageBoxToActivePage();  break;
