@@ -192,6 +192,49 @@ function tableMarkup(rows, cols){
       <button data-action="t-delrow">– Row</button><button data-action="t-delcol">– Col</button>
     </div>`;
 }
+/* one editable text row (with hover delete) inside an image+text layout */
+function layoutRowHTML(text){
+  return `<div class="layout-row">`+
+    `<div class="lr-text" contenteditable="true">${text || "New text"}</div>`+
+    `<button class="lr-del no-print" contenteditable="false" data-action="layout-delrow" title="Delete this text">✕</button>`+
+  `</div>`;
+}
+/* 8 resize handles (4 corners + 4 edges) for an image box */
+function resizeHandlesHTML(){
+  return ["nw","n","ne","e","se","s","sw","w"]
+    .map(d => `<span class="img-resize no-print rh-${d}" data-action="img-resize" data-dir="${d}"></span>`)
+    .join("");
+}
+/* image + text block (image on one side, a column of text rows on the other) */
+function imgTextBlock(side){
+  const img =
+    `<div class="cimg layout-img" style="width:42%" draggable="true">`+
+      `<div class="cimg-placeholder no-print" data-action="img-pick">🖼️ Upload Image</div>`+
+      resizeHandlesHTML()+
+    `</div>`;
+  const textCol =
+    `<div class="layout-text-col">`+
+      layoutRowHTML("Type text here. Add more rows with “＋ Add Text”, resize the image from its corner.")+
+      `<button class="layout-addrow no-print" data-action="layout-addrow">＋ Add Text</button>`+
+    `</div>`;
+  /* markup is always image + text; CSS flips the side for "right" */
+  return blockShell("img-" + side, `<div class="img-text-layout layout-${side}">${img}${textCol}</div>`);
+}
+/* image in the MIDDLE with text columns on BOTH sides (each: multiple rows) */
+function imgBothBlock(){
+  const textCol = (cls) =>
+    `<div class="layout-text-col ${cls}">`+
+      layoutRowHTML("Text here. Use “＋ Add Text” for more rows.")+
+      `<button class="layout-addrow no-print" data-action="layout-addrow">＋ Add Text</button>`+
+    `</div>`;
+  const img =
+    `<div class="cimg layout-img" style="width:34%" draggable="true">`+
+      `<div class="cimg-placeholder no-print" data-action="img-pick">🖼️ Upload Image</div>`+
+      resizeHandlesHTML()+
+    `</div>`;
+  return blockShell("img-both", `<div class="img-text-layout layout-both">${textCol("side-left")}${img}${textCol("side-right")}</div>`);
+}
+
 function blockHTML(type, text){
   switch(type){
     case "heading":   return blockShell("heading",   `<h2 contenteditable="true">${text || "Heading"}</h2>`);
@@ -199,7 +242,10 @@ function blockHTML(type, text){
     case "list":      return blockShell("list",      `<ul contenteditable="true"><li>First item</li><li>Second item</li></ul>`);
     case "cols2":     return blockShell("cols2",     `<div class="cols cols-2"><div class="col" contenteditable="true">Column 1</div><div class="col" contenteditable="true">Column 2</div></div>`);
     case "cols3":     return blockShell("cols3",     `<div class="cols cols-3"><div class="col" contenteditable="true">Column 1</div><div class="col" contenteditable="true">Column 2</div><div class="col" contenteditable="true">Column 3</div></div>`);
-    case "image":     return blockShell("image",     `<div class="cimg" style="width:55%"><div class="cimg-placeholder no-print" data-action="img-pick">🖼️ Click to upload image</div><span class="img-resize no-print" data-action="img-resize"></span></div>`);
+    case "image":     return blockShell("image",     `<div class="cimg align-center" style="width:55%" draggable="true"><div class="cimg-placeholder no-print" data-action="img-pick">🖼️ Click to upload image</div>${resizeHandlesHTML()}</div><div class="img-dropzones no-print"><div class="dropzone" data-align="left">◧ Left</div><div class="dropzone active" data-align="center">▣ Center</div><div class="dropzone" data-align="right">Right ◨</div></div>`);
+    case "img-left":  return imgTextBlock("left");
+    case "img-right": return imgTextBlock("right");
+    case "img-both":  return imgBothBlock();
     case "table":     return blockShell("table",     tableMarkup(3,3));
     default: return "";
   }
@@ -267,6 +313,21 @@ function tableAddRow(btn){ const t = tableOf(btn); const cols = t.rows[0].cells.
 function tableAddCol(btn){ const t = tableOf(btn); for(const row of t.rows){ const td = row.insertCell(-1); td.contentEditable = "true"; td.textContent = "Cell"; } History.snapshot(); }
 function tableDelRow(btn){ const t = tableOf(btn); if(t.rows.length > 1) t.deleteRow(-1); History.snapshot(); }
 function tableDelCol(btn){ const t = tableOf(btn); if(t.rows[0].cells.length > 1){ for(const row of t.rows) row.deleteCell(-1); } History.snapshot(); }
+
+/* ---- image+text layout: text rows ---- */
+function layoutAddRow(btn){
+  const col = btn.closest(".layout-text-col");
+  const row = htmlToNode(layoutRowHTML("New text"));
+  col.insertBefore(row, btn);          // add above the "+ Add Text" button
+  focusFirstEditable(row);
+  History.snapshot();
+}
+function layoutDelRow(btn){
+  const row = btn.closest(".layout-row");
+  const col = row && row.closest(".layout-text-col");
+  if(col && col.querySelectorAll(".layout-row").length > 1){ row.remove(); History.snapshot(); }
+  else flash("At least one text row is required");
+}
 
 /* ---- images (upload / replace) ---- */
 let imgPickCb = null;
@@ -361,28 +422,128 @@ document.addEventListener("mousedown", e => {
   if(e.target.closest(".float-toolbar")) e.preventDefault();
 });
 
-/* image resize via drag handle */
+/* image resize from any handle — corners + edges (top/bottom/left/right) */
 document.addEventListener("mousedown", e => {
   const handle = e.target.closest(".img-resize");
   if(!handle) return;
-  e.preventDefault();
+  e.preventDefault(); e.stopPropagation();
+  const dir  = handle.dataset.dir || "se";
   const cimg = handle.closest(".cimg");
-  const area = cimg.closest(".custom-content");
-  const startX = e.clientX, startW = cimg.offsetWidth, areaW = area.clientWidth;
+  const ref  = cimg.parentElement;                 // width % is relative to the immediate container
+  const area = cimg.closest(".custom-content") || cimg.closest(".imported-overlay") || ref;
+  const img  = cimg.querySelector("img");
+  const startX = e.clientX, startY = e.clientY;
+  const startW = cimg.offsetWidth;
+  const refW   = (ref && ref.clientWidth) || (area && area.clientWidth) || startW;
+  const startH = img ? img.offsetHeight : cimg.offsetHeight;
+  const sx = dir.includes("e") ? 1 : (dir.includes("w") ? -1 : 0);  // width: +right edge, -left edge
+  const sy = dir.includes("s") ? 1 : (dir.includes("n") ? -1 : 0);  // height: +bottom edge, -top edge
   function move(ev){
-    const w = startW + (ev.clientX - startX);
-    const pct = Math.max(15, Math.min(100, (w / areaW) * 100));
-    cimg.style.width = pct.toFixed(1) + "%";
+    if(sx !== 0){
+      const w = startW + sx * (ev.clientX - startX);
+      const pct = Math.max(12, Math.min(100, (w / refW) * 100));
+      cimg.style.width = pct.toFixed(1) + "%";
+    }
+    if(sy !== 0 && img){
+      const h = startH + sy * (ev.clientY - startY);
+      img.style.height = Math.max(40, h) + "px";
+      img.style.width = "100%";
+      img.style.objectFit = "contain";   // keep image undistorted inside the new box
+    }
   }
   function up(){ document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up); History.snapshot(); }
   document.addEventListener("mousemove", move);
   document.addEventListener("mouseup", up);
 });
 
+/* ---- drag-and-drop image alignment ---- */
+let draggedCimg = null;
+let dragClone = null;
+let dropzones = [];
+
+document.addEventListener("dragstart", e => {
+  if(e.target.closest(".img-resize")){ e.preventDefault(); return; }  // grabbing the resize handle must NOT start a move-drag
+  const cimg = e.target.closest(".cimg[draggable]");
+  if(!cimg) return;
+  draggedCimg = cimg;
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", "");
+  /* create a visual clone for the drag image */
+  dragClone = cimg.cloneNode(true);
+  dragClone.classList.add("drag-clone");
+  dragClone.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:120px;opacity:0.85;z-index:9999;pointer-events:none;border:3px solid #2f8fd0;border-radius:6px;";
+  document.body.appendChild(dragClone);
+  e.dataTransfer.setDragImage(dragClone, 60, 40);
+  /* show dropzones */
+  const block = cimg.closest(".block");
+  if(block){
+    block.classList.add("dragging-block");
+    dropzones = Array.from(block.querySelectorAll(".dropzone"));
+    dropzones.forEach(dz => dz.classList.add("visible"));
+  }
+  cimg.classList.add("dragging");
+});
+
+document.addEventListener("dragend", e => {
+  if(dragClone){ dragClone.remove(); dragClone = null; }
+  if(draggedCimg){
+    draggedCimg.classList.remove("dragging");
+    const block = draggedCimg.closest(".block");
+    if(block){
+      block.classList.remove("dragging-block");
+      dropzones.forEach(dz => { dz.classList.remove("visible"); dz.classList.remove("drag-over"); });
+    }
+  }
+  dropzones = [];
+  draggedCimg = null;
+});
+
+document.addEventListener("dragover", e => {
+  const dz = e.target.closest(".dropzone");
+  if(!dz || !draggedCimg) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  dropzones.forEach(d => d.classList.remove("drag-over"));
+  dz.classList.add("drag-over");
+});
+
+document.addEventListener("dragleave", e => {
+  const dz = e.target.closest(".dropzone");
+  if(dz) dz.classList.remove("drag-over");
+});
+
+document.addEventListener("drop", e => {
+  const dz = e.target.closest(".dropzone");
+  if(!dz || !draggedCimg) return;
+  e.preventDefault();
+  const align = dz.dataset.align;
+  draggedCimg.classList.remove("align-left","align-center","align-right");
+  draggedCimg.classList.add("align-" + align);
+  dz.parentElement.querySelectorAll(".dropzone").forEach(d => d.classList.remove("active"));
+  dz.classList.add("active");
+  History.snapshot();
+  dropzones.forEach(d => { d.classList.remove("drag-over"); });
+});
+
 /* master click handler */
 document.addEventListener("click", e => {
   /* click an existing custom image -> replace it */
   if(e.target.matches(".cimg img")){ pickImageInto(e.target); return; }
+
+  /* alignment buttons (Left / Center / Right) — click to align */
+  const dz = e.target.closest(".dropzone");
+  if(dz){
+    const blk = dz.closest(".block");
+    const cimg = blk && blk.querySelector(".cimg");
+    if(cimg){
+      cimg.classList.remove("align-left","align-center","align-right");
+      cimg.classList.add("align-" + dz.dataset.align);
+      dz.parentElement.querySelectorAll(".dropzone").forEach(d => d.classList.remove("active"));
+      dz.classList.add("active");
+      History.snapshot();
+    }
+    return;
+  }
 
   const btn = e.target.closest("[data-action]");
   if(!btn) return;
@@ -397,6 +558,9 @@ document.addEventListener("click", e => {
     case "ins-heading":   insertBlock("heading");   break;
     case "ins-paragraph": insertBlock("paragraph"); break;
     case "ins-image":     insertBlock("image");     break;
+    case "ins-img-left":  insertBlock("img-left");  break;
+    case "ins-img-right": insertBlock("img-right"); break;
+    case "ins-img-both":  insertBlock("img-both");  break;
     case "ins-list":      insertBlock("list");      break;
     case "ins-cols2":     insertBlock("cols2");     break;
     case "ins-cols3":     insertBlock("cols3");     break;
@@ -408,7 +572,11 @@ document.addEventListener("click", e => {
     case "b-del":  delBlock(block);      break;
     /* image */
     case "img-pick": pickImageInto(btn); break;
+    case "img-resize": break; /* handled by mousedown listener */
     case "imp-replace-bg": { const im = btn.closest(".page").querySelector("img.full"); if(im){ slotImg = im; imgPickCb = null; document.getElementById("imgInput").click(); } break; }
+    /* image + text layout rows */
+    case "layout-addrow": layoutAddRow(btn); break;
+    case "layout-delrow": layoutDelRow(btn); break;
     /* table */
     case "t-addrow": tableAddRow(btn); break;
     case "t-addcol": tableAddCol(btn); break;
