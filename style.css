@@ -1,0 +1,191 @@
+/* =========================================================
+   Aqua Soft — editable brochure rebuild (page-2 style)
+   ========================================================= */
+:root{
+  --headblue:#2f8fd0; --headblue2:#1f6fb0;
+  --cpblue:#26307e; --cpcyan:#2aa9e0;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; padding:84px 20px 60px; color:#1a1a1a; }
+
+/* ---------- toolbar ---------- */
+.toolbar{ position:fixed; top:0; left:0; right:0; z-index:50; background:#fff; border-bottom:1px solid #d8d8d8;
+  display:flex; align-items:center; justify-content:space-between; padding:10px 16px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+.toolbar .hint{ color:#666; font-size:12px; margin-left:12px; }
+.tb-right{ display:flex; gap:8px; flex-wrap:wrap; }
+.toolbar button{ border:1px solid var(--headblue); background:#fff; color:var(--headblue2);
+  padding:7px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; }
+.toolbar button:hover{ background:#eaf4fb; }
+.toolbar button.primary{ background:var(--headblue); color:#fff; }
+
+/* ---------- A4 page ---------- */
+.page{ position:relative; width:210mm; height:297mm; background:#fff; margin:0 auto 22px;
+  box-shadow:0 6px 30px rgba(0,0,0,.35); overflow:hidden; }
+.full{ width:100%; height:100%; display:block; object-fit:fill; }
+
+/* ---------- shared decoration ---------- */
+.wave-top{ position:absolute; top:0; left:0; width:74%; z-index:1; }
+.wave-bottom{ position:absolute; bottom:0; left:0; width:100%; z-index:1; }
+.logo{ position:absolute; top:6mm; right:12mm; width:42mm; z-index:3; }
+
+/* =========================================================
+   PAGE 2 — QUOTATION
+   ========================================================= */
+.content{ position:relative; z-index:2; padding:42mm 14mm 26mm 14mm; }
+.meta{ width:100%; border-collapse:collapse; font-size:12pt; margin-bottom:10px; }
+.meta td{ border:1px solid #000; padding:3px 8px; line-height:1.35; }
+.meta .k{ font-weight:700; width:34%; white-space:nowrap; }
+.meta .v{ width:40%; }
+.meta .d{ width:26%; white-space:nowrap; }
+.meta .dlabel{ font-weight:700; }
+.price{ width:100%; border-collapse:collapse; font-size:12pt; }
+.price th, .price td{ border:1px solid #2b2b2b; padding:4px 9px; vertical-align:middle; }
+.price .phead th{ background:linear-gradient(180deg,var(--headblue),var(--headblue2)); color:#fff; font-size:14pt; font-weight:800; text-align:left; }
+.price .phead .amt{ text-align:right; }
+.price tbody td{ font-weight:700; }
+.price .amt{ text-align:right; white-space:nowrap; width:30%; }
+.price .total td, .price .gst td{ font-weight:800; }
+.letter{ margin-top:14px; font-size:12.5pt; line-height:1.5; }
+.letter p{ margin-bottom:9px; }
+.sign{ margin-top:6px; }
+.regards{ width:52mm; display:block; margin:2px 0; }
+.sname{ font-weight:800; font-size:12.5pt; line-height:1.3; }
+.srole{ font-size:11.5pt; }
+
+/* =========================================================
+   PAGE 3 — COMPANY PROFILE
+   ========================================================= */
+.cp{ position:relative; z-index:2; padding:42mm 16mm 40mm 16mm; height:100%;
+  display:flex; flex-direction:column;
+  background:
+    repeating-linear-gradient(60deg, rgba(38,48,126,.03) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(-60deg, rgba(38,48,126,.03) 0 1px, transparent 1px 22px); }
+.cp-box{ border:2px solid var(--cpblue); border-radius:2px; padding:26px 28px 30px; flex:1 1 auto; }
+.cp-title{ display:flex; align-items:center; gap:10px; font-size:27pt; color:var(--cpblue); margin-bottom:20px; }
+.cp-title b{ font-family:"Baloo 2",sans-serif; font-weight:800; letter-spacing:.5px; }
+.cp-title i{ color:var(--cpcyan); font-family:"Dancing Script",cursive; font-weight:700; font-size:1.15em; }
+.cp-title .dash{ flex:0 0 26px; height:3px; background:var(--cpblue); }
+.cp-text{ font-family:"Baloo 2",sans-serif; font-size:19.5pt; line-height:1.6; color:var(--cpblue); font-weight:600; text-align:justify; }
+/* page 3 has shorter text -> bigger so the box looks full */
+[data-ep="p3"] .cp-text{ font-size:23pt; line-height:1.85; }
+/* rounded font on the other rebuilt pages */
+.tech-mid div, .tech-val div, .tech-h b, .terms h4, .why h4, .why p,
+.ty-big, .ty-wait, .ty-contact{ font-family:"Baloo 2",sans-serif; }
+
+/* ---------- shared cursive title ---------- */
+.cp-title.big-cursive{ justify-content:center; }
+.cp-title.big-cursive i{ font-size:30pt; }
+
+/* =========================================================
+   PAGE 5 — TECHNICAL SPECIFICATION
+   ========================================================= */
+.tech{ position:relative; z-index:2; padding:42mm 12mm 26mm 12mm; display:flex; gap:8mm; height:100%; align-items:flex-start; }
+.tech-photo{ flex:0 0 70mm; }
+.tech-photo img{ width:100%; height:auto; border:1px solid #cfd8e3; display:block; }
+.tech-right{ flex:1; }
+.techtable{ width:100%; border-collapse:collapse; }
+.techtable th, .techtable td{ font-family:"Baloo 2",sans-serif; color:var(--cpblue); font-weight:600;
+  font-size:14pt; padding:6px 10px; vertical-align:top; text-align:left; }
+.techtable td:nth-child(2), .techtable th:nth-child(2){ border-left:2px solid var(--cpblue); }
+.techtable thead th{ padding-bottom:12px; }
+.th-b{ display:block; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:18pt; color:var(--cpblue); }
+.th-i{ display:block; font-family:"Dancing Script",cursive; font-weight:700; font-size:17pt; color:var(--cpcyan); }
+
+/* ---------- image slots ---------- */
+.imgslot{ position:relative; }
+.full-slot{ width:100%; height:100%; }
+.slot-btn{ position:absolute; top:8px; left:8px; z-index:15; background:var(--headblue); color:#fff;
+  border:none; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer; opacity:.85; }
+.slot-btn:hover{ opacity:1; }
+
+/* individual photo slots over a background page */
+.photoslot{ position:absolute; z-index:5; outline:1px dashed rgba(47,143,208,.7); }
+.photoslot img{ width:100%; height:100%; object-fit:cover; display:block; }
+.photoslot .ps{ top:2px; left:2px; padding:3px 6px; font-size:11px; }
+
+/* editable text overlay on cover */
+.cov-edit{ position:absolute; z-index:6; color:#1c3f94; font-weight:700; outline:1px dashed transparent; }
+.cov-edit:hover{ outline:1px dashed #9bc0e2; }
+/* editable cover title — white box masks the baked title text */
+.cov-title-edit{ position:absolute; z-index:6; background:#fff; color:#1c3f94; font-weight:800;
+  font-size:19pt; text-align:center; height:5.6%; display:flex; align-items:center; justify-content:center;
+  font-family:"Segoe UI",Arial,sans-serif; }
+.cov-title-edit:hover{ outline:1px dashed #9bc0e2; }
+
+/* =========================================================
+   PAGE 7 — ELEMENTS TABLE
+   ========================================================= */
+.eltable{ width:100%; border-collapse:collapse; font-size:14pt; margin-top:8px; }
+.eltable th{ text-align:left; color:#000; font-weight:800; padding:6px 10px; font-size:15pt; }
+.eltable td{ padding:6px 10px; color:#222; }
+.eltable tbody tr:nth-child(odd){ background:#eef1f5; }
+
+/* =========================================================
+   PAGE 8 — TERMS  &  PAGE 12 — WHY
+   ========================================================= */
+.terms h4, .why h4{ color:var(--cpblue); font-size:15pt; margin:10px 0 4px; }
+.terms ul{ list-style:none; margin:0 0 6px; }
+.terms li{ position:relative; padding-left:28px; font-size:13.5pt; color:#222; margin-bottom:6px; line-height:1.4; }
+.terms li::before{ content:"\f164"; font-family:"Font Awesome 6 Free"; font-weight:900; color:#1f6fb0;
+  position:absolute; left:0; top:2px; font-size:13pt; }
+.why p{ font-size:12.5pt; color:#222; line-height:1.5; margin-bottom:8px; text-align:justify; }
+.why h4{ font-size:14pt; }
+
+/* =========================================================
+   PAGE 16 — THANK YOU
+   ========================================================= */
+.thanks{ position:relative; z-index:2; padding:40mm 16mm; height:100%; text-align:center; display:flex; flex-direction:column; align-items:center; }
+.ty-logo{ width:70mm; margin-bottom:6mm; }
+.ty-big{ font-size:46pt; font-weight:800; color:var(--cpcyan); letter-spacing:2px; }
+.ty-happy{ font-size:30pt; color:#fff; background:var(--cpblue); font-family:"Dancing Script",cursive;
+  padding:4px 30px; margin:6mm 0; border-radius:3px; }
+.ty-wait{ font-size:18pt; color:var(--cpblue); font-weight:700; margin-bottom:10mm; }
+.ty-contact{ font-size:15pt; color:var(--cpblue); }
+.ty-contact div{ margin-bottom:6px; }
+.ty-contact b{ color:var(--cpcyan); }
+
+/* =========================================================
+   PAGE 6 — FEATURES
+   ========================================================= */
+.feat{ position:relative; z-index:2; height:100%; padding:40mm 12mm 24mm;
+  background:
+    repeating-linear-gradient(60deg, rgba(38,48,126,.03) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(-60deg, rgba(38,48,126,.03) 0 1px, transparent 1px 22px); }
+.feat-machine{ position:absolute; left:35%; top:16%; width:31%; }
+.feat-machine img{ width:100%; display:block; }
+.callout{ position:absolute; width:27%; font-family:"Baloo 2",sans-serif; font-weight:700;
+  font-size:13.5pt; line-height:1.3; color:#1c3f94; display:flex; gap:7px; }
+.callout i{ color:#2aa9e0; font-size:19pt; flex:0 0 auto; margin-top:2px; }
+.c-tl{ left:5%;  top:19%; }
+.c-tr{ right:5%; top:19%; }
+.c-ml{ left:5%;  top:38%; }
+.c-mr{ right:5%; top:40%; }
+.c-br{ right:5%; top:56%; }
+.feat-bullets{ position:absolute; left:9%; right:9%; bottom:15%; list-style:none; }
+.feat-bullets li{ font-family:"Baloo 2",sans-serif; color:#1c3f94; font-weight:700; font-size:15pt;
+  margin-bottom:10px; padding-left:26px; position:relative; }
+.feat-bullets li::before{ content:"\f069"; font-family:"Font Awesome 6 Free"; font-weight:900;
+  color:#2aa9e0; position:absolute; left:0; top:3px; font-size:13pt; }
+
+/* ---------- editor affordances ---------- */
+[contenteditable="true"]:hover{ outline:1px dashed #9bc0e2; }
+[contenteditable="true"]:focus{ outline:2px solid var(--headblue); background:#fafdff; }
+.act{ width:50px; text-align:center; border:none !important; white-space:nowrap; }
+.del, .addb{ border:none; border-radius:4px; cursor:pointer; padding:2px 7px; font-weight:700; font-size:13px; line-height:1; }
+.del{ background:#ffe3e3; color:#c0392b; }
+.del:hover{ background:#ffc9c9; }
+.addb{ background:#dcf5e3; color:#1f9d55; margin-right:3px; }
+.addb:hover{ background:#bdeccb; }
+.addrow{ margin-top:6px; border:1px dashed var(--headblue); background:#eaf4fb; color:var(--headblue2);
+  padding:5px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
+
+/* ---------- print ---------- */
+@page{ size:A4; margin:0; }
+@media print{
+  body{ background:#fff; padding:0; }
+  .no-print{ display:none !important; }
+  .page{ box-shadow:none; margin:0; page-break-after:always; break-after:page; }
+  .page:last-child{ page-break-after:avoid; break-after:avoid; }
+  [contenteditable="true"]:hover, [contenteditable="true"]:focus{ outline:none; background:transparent; }
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+}

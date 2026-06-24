@@ -1,0 +1,8 @@
+# OS / editor junk
+Thumbs.db
+desktop.ini
+.DS_Store
+*.tmp
+
+# local temp render output (not part of the site)
+_*.pdf
