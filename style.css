@@ -291,16 +291,20 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
 
 /* floating block toolbar — vertical, left side */
 .float-toolbar{ position:fixed; left:12px; top:50%; transform:translateY(-50%); z-index:120;
-  width:150px; background:#fff; border:1px solid #d8d8d8; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.25);
-  display:flex; flex-direction:column; gap:8px; padding:10px; max-height:90vh; overflow:auto; }
-.ft-group{ display:flex; flex-wrap:wrap; gap:4px; justify-content:center; align-items:center;
-  padding-bottom:8px; border-bottom:1px solid #eee; }
-.ft-group:last-child{ border-bottom:none; padding-bottom:0; }
+  width:182px; background:#fff; border:1px solid #d8d8d8; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.25);
+  display:flex; flex-direction:column; gap:9px; padding:10px; max-height:92vh; overflow:auto; }
+.float-toolbar > div{ padding-bottom:9px; border-bottom:1px solid #eee; }
+.float-toolbar > div:last-child{ border-bottom:none; padding-bottom:0; }
+/* row groups (format, align, history) */
+.ft-group{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; align-items:center; }
+/* insert blocks — clean 2-column grid */
+.ft-insert{ display:grid; grid-template-columns:1fr 1fr; gap:5px; }
 .float-toolbar button{ border:1px solid #cfd8e3; background:#fff; color:#1f6fb0; border-radius:6px;
-  padding:5px 8px; font-size:12px; font-weight:600; cursor:pointer; }
+  padding:6px 8px; font-size:12px; font-weight:600; cursor:pointer; line-height:1.1; }
 .float-toolbar button:hover{ background:#eaf4fb; }
-/* insert-block buttons fill the toolbar width (one per line) */
-.ft-group:nth-child(3) button{ flex:1 1 100%; text-align:left; }
+.ft-group button{ min-width:30px; }
+.ft-history button{ flex:1; }
+.ft-insert button{ width:100%; text-align:left; font-size:11px; padding:6px 7px; white-space:nowrap; }
 
 /* hide editor controls while capturing pages for Editable PDF */
 .exporting .no-print{ display:none !important; }

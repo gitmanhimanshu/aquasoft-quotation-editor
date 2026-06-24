@@ -410,6 +410,38 @@ const FMT = { "fmt-bold":"bold", "fmt-italic":"italic", "fmt-underline":"underli
               "align-left":"justifyLeft", "align-center":"justifyCenter", "align-right":"justifyRight" };
 function applyFormat(cmd){ document.execCommand(cmd, false, null); History.snapshot(); }
 
+/* increase / decrease text size — works on a selection, else on the focused text block */
+function adjustFontSize(delta){
+  const sel = window.getSelection();
+  if(sel && sel.rangeCount && !sel.isCollapsed){
+    const range = sel.getRangeAt(0);
+    const refEl = range.commonAncestorContainer.nodeType === 1
+      ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+    const cur = parseFloat(getComputedStyle(refEl).fontSize) || 16;
+    const span = document.createElement("span");
+    span.style.fontSize = Math.max(8, Math.min(96, cur + delta)) + "px";
+    try{
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+      sel.removeAllRanges();
+      const nr = document.createRange(); nr.selectNodeContents(span); sel.addRange(nr);  // keep selection for repeat clicks
+      History.snapshot();
+    }catch(e){}
+    return;
+  }
+  /* no selection -> resize the whole editable element under the cursor */
+  let el = document.activeElement;
+  el = (el && el.closest) ? el.closest('[contenteditable="true"]') : null;
+  if(!el && activeContent) el = activeContent.querySelector('[contenteditable="true"]');
+  if(el){
+    const cur = parseFloat(getComputedStyle(el).fontSize) || 16;
+    el.style.fontSize = Math.max(8, Math.min(96, cur + delta)) + "px";
+    History.snapshot();
+  }else{
+    flash("Select some text (or click inside a text block) first");
+  }
+}
+
 /* ============================================================
    UNDO / REDO  (snapshot the pages container)
    ============================================================ */
@@ -581,6 +613,8 @@ document.addEventListener("click", e => {
 
   /* text formatting */
   if(FMT[action]){ applyFormat(FMT[action]); return; }
+  if(action === "font-bigger"){ adjustFontSize(2); return; }
+  if(action === "font-smaller"){ adjustFontSize(-2); return; }
 
   switch(action){
     /* insert blocks */

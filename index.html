@@ -13,7 +13,7 @@
 <!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=20260624i">
+<link rel="stylesheet" href="style.css?v=20260624k">
 </head>
 <body>
 
@@ -48,31 +48,33 @@
 
 <!-- ===================== FLOATING BLOCK TOOLBAR (custom pages) ===================== -->
 <div class="float-toolbar no-print" id="floatBar">
-  <div class="ft-group">
+  <div class="ft-group ft-format">
     <button data-action="fmt-bold" title="Bold"><b>B</b></button>
     <button data-action="fmt-italic" title="Italic"><i>I</i></button>
     <button data-action="fmt-underline" title="Underline"><u>U</u></button>
+    <button data-action="font-bigger" title="Increase text size">A⏶</button>
+    <button data-action="font-smaller" title="Decrease text size">A⏷</button>
   </div>
-  <div class="ft-group">
-    <button data-action="align-left" title="Align left">⯇</button>
-    <button data-action="align-center" title="Center">▤</button>
-    <button data-action="align-right" title="Align right">⯈</button>
+  <div class="ft-group ft-align">
+    <button data-action="align-left" title="Align left">◄</button>
+    <button data-action="align-center" title="Center">▦</button>
+    <button data-action="align-right" title="Align right">►</button>
   </div>
-  <div class="ft-group">
+  <div class="ft-insert">
     <button data-action="ins-heading">＋ Heading</button>
     <button data-action="ins-paragraph">＋ Text</button>
     <button data-action="ins-image">＋ Image</button>
-    <button data-action="ins-img-left">＋ Image+Text (Left)</button>
-    <button data-action="ins-img-right">＋ Image+Text (Right)</button>
-    <button data-action="ins-img-both">＋ Image+Text (Both)</button>
     <button data-action="ins-list">＋ List</button>
     <button data-action="ins-cols2">＋ 2-Col</button>
     <button data-action="ins-cols3">＋ 3-Col</button>
     <button data-action="ins-table">＋ Table</button>
+    <button data-action="ins-img-left">＋ Img Left</button>
+    <button data-action="ins-img-right">＋ Img Right</button>
+    <button data-action="ins-img-both">＋ Img Both</button>
   </div>
-  <div class="ft-group">
-    <button data-action="undo" title="Undo">↶</button>
-    <button data-action="redo" title="Redo">↷</button>
+  <div class="ft-group ft-history">
+    <button data-action="undo" title="Undo">↶ Undo</button>
+    <button data-action="redo" title="Redo">↷ Redo</button>
   </div>
 </div>
 
@@ -284,6 +286,6 @@
 <div class="page"><img class="full" src="assets/pages/page_15.jpg" alt="Page 15"></div>
 <div class="page"><img class="full" src="assets/pages/page_16.jpg" alt="Page 16"></div>
 
-<script src="app.js?v=20260624i"></script>
+<script src="app.js?v=20260624k"></script>
 </body>
 </html>
