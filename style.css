@@ -314,9 +314,28 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
 .floatimg .fb-img img{ width:100%; height:auto; display:block; border-radius:3px; }
 .fb-img-ph{ border:2px dashed #9bc0e2; color:#3a7cae; padding:30px 16px; text-align:center;
   border-radius:8px; background:#f3f8fc; font-size:12pt; }
+/* floating EMOJI */
+.floatemoji{ width:auto !important; }
+.fb-emoji{ font-size:44px; line-height:1; user-select:none; padding:2px; outline:1px dashed transparent; }
+.floatemoji:hover .fb-emoji{ outline-color:#9bc0e2; }
+.fb-emoji:focus{ outline:2px solid #2f8fd0; }
+
+/* emoji picker panel */
+#emojiPicker{ position:fixed; left:202px; top:50%; transform:translateY(-50%); z-index:130;
+  background:#fff; border:1px solid #d8d8d8; border-radius:12px; box-shadow:0 6px 22px rgba(0,0,0,.28);
+  padding:0 10px 10px; width:288px; max-height:78vh; overflow-y:auto; display:none; }
+#emojiPicker.show{ display:block; }
+.emoji-head{ position:sticky; top:0; background:#fff; font-size:13px; font-weight:700; color:#1f6fb0;
+  padding:10px 0 6px; border-bottom:1px solid #eee; z-index:1; }
+.emoji-cat{ font-size:10.5px; font-weight:700; color:#9aa; text-transform:uppercase; letter-spacing:.5px; margin:8px 0 3px; }
+.emoji-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.emoji-grid button{ border:none; background:#f5f9fc; border-radius:6px; font-size:19px; cursor:pointer;
+  padding:5px 0; line-height:1; }
+.emoji-grid button:hover{ background:#dceaf6; transform:scale(1.12); }
+
 @media print{
   .fb-bar, .fb-resize, .fb-img-ph{ display:none !important; }
-  .fb-text{ outline:none !important; background:transparent !important; }
+  .fb-text, .fb-emoji{ outline:none !important; background:transparent !important; }
 }
 
 /* table block */

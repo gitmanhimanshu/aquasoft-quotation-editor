@@ -13,7 +13,7 @@
 <!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=20260624q">
+<link rel="stylesheet" href="style.css?v=20260624s">
 </head>
 <body>
 
@@ -46,6 +46,9 @@
   </div>
 </div>
 
+<!-- ===================== EMOJI PICKER ===================== -->
+<div id="emojiPicker" class="no-print"></div>
+
 <!-- ===================== FLOATING BLOCK TOOLBAR (custom pages) ===================== -->
 <div class="float-toolbar no-print" id="floatBar">
   <div class="ft-group ft-format">
@@ -64,6 +67,7 @@
   <div class="ft-insert">
     <button data-action="add-textbox" class="ft-textbox" title="Add a draggable text box to the current page">🆎 Text Box</button>
     <button data-action="add-imagebox" class="ft-textbox" title="Add a draggable image to the current page">🖼️ Image Box</button>
+    <button data-action="toggle-emoji" class="ft-textbox" title="Add an emoji to the current page">😀 Emoji</button>
     <button data-action="ins-heading">＋ Heading</button>
     <button data-action="ins-paragraph">＋ Text</button>
     <button data-action="ins-image">＋ Image</button>
@@ -290,6 +294,6 @@
 <div class="page"><img class="full" src="assets/pages/page_15.jpg" alt="Page 15"></div>
 <div class="page"><img class="full" src="assets/pages/page_16.jpg" alt="Page 16"></div>
 
-<script src="app.js?v=20260624q"></script>
+<script src="app.js?v=20260624s"></script>
 </body>
 </html>

@@ -465,7 +465,50 @@ function addImageBoxToActivePage(){
   pickFloatImage(box.querySelector(".fb-img"));   // open the upload dialog right away
 }
 
-/* drag a text/image box to reposition (within its page) */
+/* ---- free draggable EMOJI (same drag/resize as text & image boxes) ---- */
+const EMOJI_GROUPS = {
+  "Smileys": "😀 😃 😄 😁 😆 😅 😂 🤣 🥲 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🥸 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🤭 🤫 🤥 😶 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾",
+  "Gestures": "👋 🤚 🖐️ ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 🖕 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 👐 🤲 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🦵 🦶 👂 👃 🧠 🫀 🫁 🦷 👀 👁️ 👅 👄",
+  "People": "👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 👮 🕵️ 💂 👷 🤴 👸 👳 👲 🧕 🤵 👰 🤰 🤱 👼 🎅 🤶 🦸 🦹 🧙 🧚 🧛 🧜 🧝 🧞 🧟 💆 💇 🚶 🏃 💃 🕺 👫 👬 👭 👪",
+  "Hearts": "❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 💋 💌 💯 💢 💥 💫 💦 💨 🕳️ 💬 💭 💤",
+  "Animals": "🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🐺 🐗 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🦂 🐢 🐍 🦎 🐙 🦑 🦐 🦀 🐟 🐠 🐡 🐬 🐳 🐋 🦈 🐊 🐅 🐆 🦓 🦍 🐘 🦛 🦏 🐪 🐫 🦒 🐃 🐄 🐎 🐖 🐏 🐑 🐐 🦌 🐕 🐩 🐈 🐓 🦃 🦚 🦜 🕊️ 🐇 🐁 🐀",
+  "Nature": "🌸 💐 🌹 🥀 🌺 🌻 🌼 🌷 🌱 🌲 🌳 🌴 🌵 🌾 🌿 ☘️ 🍀 🍁 🍂 🍃 🍄 🌰 🌍 🌎 🌏 🌕 🌙 ⭐ 🌟 ✨ ⚡ 🔥 💧 🌊 ☀️ ⛅ ☁️ 🌈 ❄️ ⛄ 💨 🌪️ 🌫️ 🌧️ ⛈️",
+  "Food": "🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🥦 🥕 🌽 🌶️ 🥒 🥬 🧄 🧅 🥔 🍠 🥐 🍞 🥖 🥨 🧀 🥚 🍳 🥞 🥓 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍲 🍛 🍣 🍱 🍚 🍙 🍢 🍡 🍧 🍨 🍦 🍰 🎂 🧁 🥧 🍫 🍬 🍭 🍮 🍯 ☕ 🍵 🥤 🍶 🍺 🍻 🥂 🍷 🥃 🍸 🍹 🍾",
+  "Activity": "⚽ 🏀 🏈 ⚾ 🎾 🏐 🏉 🎱 🏓 🏸 🥅 🏒 🏑 🏏 ⛳ 🏹 🎣 🥊 🥋 🎽 ⛸️ 🥌 🎿 ⛷️ 🏂 🏆 🥇 🥈 🥉 🏅 🎖️ 🎫 🎪 🎭 🎨 🎬 🎤 🎧 🎼 🎹 🥁 🎷 🎺 🎸 🎻 🎲 ♟️ 🎯 🎳 🎮 🎰 🧩",
+  "Travel": "🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚐 🚚 🚛 🚜 🏍️ 🛵 🚲 🛴 🚨 ✈️ 🛫 🛬 🚀 🛸 🚁 ⛵ 🚤 🛥️ 🚢 ⚓ 🏠 🏡 🏢 🏥 🏦 🏨 🏪 🏫 🏬 🏭 🏰 💒 🗼 🗽 ⛪ 🕌 🛕 🌁 🌃 🏙️ 🌅 🌆 🌇 🌉",
+  "Objects": "⌚ 📱 💻 ⌨️ 🖥️ 🖨️ 🖱️ 💽 💾 💿 📷 📸 📹 🎥 📞 ☎️ 📟 📠 📺 📻 🧭 ⏱️ ⏰ ⏳ ⌛ 🔋 🔌 💡 🔦 🕯️ 🧯 💸 💵 💴 💶 💷 💰 💳 💎 ⚖️ 🔧 🔨 🛠️ ⛏️ 🔩 ⚙️ 🧰 🧲 🔫 💣 🧨 🔪 🛡️ 🚬 🔮 📿 🧿 🔭 🔬 💊 💉 🩸 🧬 🦠 🌡️ 🧹 🧺 🧻 🚽 🚰 🚿 🛁 🧼 🧽 🔑 🗝️ 🚪 🛋️ 🛏️ 🖼️ 🛍️ 🛒 🎁 🎈 🎏 🎀 🧧 ✉️ 📩 📨 📧 📥 📤 📦 🏷️ 📪 📫 📮 📜 📄 📑 📊 📈 📉 🗓️ 📆 📅 📋 📁 📂 🗂️ 🗞️ 📰 📓 📔 📒 📕 📗 📘 📙 📚 📖 🔖 🔗 📎 📐 📏 🧮 📌 📍 ✂️ 🖊️ 🖋️ ✒️ 🖌️ 🖍️ 📝 ✏️ 🔍 🔎 🔒 🔓",
+  "Symbols": "✅ ❌ ⭕ 🛑 ⛔ 🚫 💯 ❗ ❕ ❓ ❔ ‼️ ⁉️ ⚠️ 🚸 🔱 ⚜️ 🔰 ♻️ 🆔 📛 🔞 📵 🚭 ➕ ➖ ➗ ✖️ ➰ ➿ 〽️ ✳️ ✴️ ❇️ ❎ ✔️ ☑️ 🔘 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🟤 🔺 🔻 🔸 🔹 🔶 🔷 🔳 🔲 ▪️ ▫️ ◼️ ◻️ 🟥 🟧 🟨 🟩 🟦 🟪 ⬛ ⬜ ★ ☆ ▶️ ⏸️ ⏹️ ⏭️ ⏮️ ⏩ ⏪ ◀️ 🔼 🔽 ➡️ ⬅️ ⬆️ ⬇️ ↗️ ↘️ ↙️ ↖️ ↕️ ↔️ ↪️ ↩️ 🔀 🔁 🔂 🔄 🔝 🔚 🔙 🔛 🔜 🔔 🔕 📣 📢 ♠️ ♣️ ♥️ ♦️ ⭐ 🌟 💫 🆗 🆕 🆒 🆓 🅰️ 🅱️ 🆎 🅾️ 🆘 ✝️ ☪️ 🕉️ ☸️ ✡️ ☯️ ☮️ 🔆 🔅"
+};
+function buildEmojiPicker(){
+  const p = document.getElementById("emojiPicker");
+  if(!p) return;
+  let html = `<div class="emoji-head">😀 Pick an emoji</div>`;
+  for(const cat in EMOJI_GROUPS){
+    const items = EMOJI_GROUPS[cat].split(" ").filter(Boolean)
+      .map(em => `<button data-action="pick-emoji">${em}</button>`).join("");
+    html += `<div class="emoji-cat">${cat}</div><div class="emoji-grid">${items}</div>`;
+  }
+  p.innerHTML = html;
+}
+function toggleEmojiPicker(){ const p = document.getElementById("emojiPicker"); if(p) p.classList.toggle("show"); }
+function floatEmojiHTML(emoji){
+  return `<div class="floatbox floatemoji" style="left:42%;top:30%;">`+
+    `<div class="fb-bar no-print"><span class="fb-move" data-action="fb-move" title="Drag to move">✥ Move</span><button class="fb-del" data-action="fb-del" title="Delete">✕</button></div>`+
+    `<div class="fb-emoji" contenteditable="true">${emoji}</div>`+
+    `<span class="fb-resize no-print" data-action="fb-resize" title="Resize"></span>`+
+  `</div>`;
+}
+function addEmojiToActivePage(emoji){
+  const pg = getActivePage();
+  if(!pg){ flash("Open a page first"); return; }
+  if(getComputedStyle(pg).position === "static") pg.style.position = "relative";
+  const box = htmlToNode(floatEmojiHTML(emoji));
+  pg.appendChild(box);
+  box.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  History.snapshot();
+}
+
+/* drag a text/image/emoji box to reposition (within its page) */
 document.addEventListener("mousedown", e => {
   const mv = e.target.closest(".fb-move");
   if(!mv) return;
@@ -483,15 +526,23 @@ document.addEventListener("mousedown", e => {
   function up(){ document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up); History.snapshot(); }
   document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
 });
-/* resize a text box (width) */
+/* resize a box: emoji -> scale font-size, text/image -> change width */
 document.addEventListener("mousedown", e => {
   const h = e.target.closest(".fb-resize");
   if(!h) return;
   e.preventDefault(); e.stopPropagation();
   const box = h.closest(".floatbox");
+  const emoji = box.querySelector(".fb-emoji");
+  const startX = e.clientX, startY = e.clientY;
+  if(emoji){
+    const startFS = parseFloat(getComputedStyle(emoji).fontSize) || 44;
+    function move(ev){ const d = Math.max(ev.clientX - startX, ev.clientY - startY); emoji.style.fontSize = Math.max(16, startFS + d) + "px"; }
+    function up(){ document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up); History.snapshot(); }
+    document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
+    return;
+  }
   const page = box.closest(".page");
-  const pw = page.clientWidth;
-  const startX = e.clientX, startW = box.offsetWidth;
+  const pw = page.clientWidth, startW = box.offsetWidth;
   function move(ev){ const w = startW + (ev.clientX - startX); box.style.width = Math.max(10, Math.min(98, (w / pw) * 100)).toFixed(1) + "%"; }
   function up(){ document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up); History.snapshot(); }
   document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
@@ -811,10 +862,12 @@ document.addEventListener("click", e => {
     case "terms-delrow": termsDelRow(btn); break;
     case "terms-addsec": termsAddSection(btn); break;
     case "terms-delsec": termsDelSection(btn); break;
-    /* free text / image boxes */
+    /* free text / image / emoji boxes */
     case "add-textbox":  addTextBoxToActivePage();   break;
     case "add-imagebox": addImageBoxToActivePage();  break;
     case "fb-img-pick":  pickFloatImage(btn);        break;
+    case "toggle-emoji": toggleEmojiPicker();        break;
+    case "pick-emoji":   addEmojiToActivePage(btn.textContent.trim()); toggleEmojiPicker(); break;
     case "fb-del":   { const b = btn.closest(".floatbox"); if(b){ b.remove(); History.snapshot(); } break; }
     case "fb-move":  break;   /* handled by mousedown */
     case "fb-resize":break;   /* handled by mousedown */
@@ -1086,6 +1139,7 @@ bindPriceInputs();
 recalcTotal();
 initPagesWrap();
 ensurePageTools();
+buildEmojiPicker();
 setupPdfWorker();
 restoreAutoSave();              // bring back unsaved work, if any
 History.reset();               // fresh undo history at the current state
