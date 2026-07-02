@@ -23,6 +23,24 @@ function recalcTotal(){
 function bindPriceInputs(){
   document.querySelectorAll("#priceTable tbody tr:not(.total):not(.gst) .price").forEach(td=> td.oninput = recalcTotal);
 }
+/* page 2: make sure Total & GST rows have the + button and the GST amount is
+   editable — also repairs sessions saved before these controls were added */
+function normalizePriceTable(){
+  const totalRow = document.getElementById("totalRow");
+  if(totalRow){
+    const act = totalRow.querySelector(".act");
+    /* always set (also migrates older sessions that added rows above the total) */
+    if(act) act.innerHTML = '<button class="addb" onclick="addRowAfterTotal()" title="Add row below (e.g. Discount)">+</button>';
+  }
+  const gst = document.querySelector("#priceTable tr.gst");
+  if(gst){
+    const amt = gst.querySelector(".amt");
+    if(amt && amt.getAttribute("contenteditable") !== "true") amt.setAttribute("contenteditable", "true");
+    const act = gst.querySelector(".act");
+    if(act && !act.querySelector("button"))
+      act.innerHTML = '<button class="addb" onclick="addRowBelow(this)" title="Add row below">+</button><button class="del" onclick="delRow(this)" title="Delete row">✕</button>';
+  }
+}
 
 /* ---------- rows ---------- */
 function delRow(btn){ btn.closest("tr").remove(); recalcTotal(); }
@@ -45,6 +63,17 @@ function addPriceRow(){
     <td class="no-print act"><button class="del" onclick="delRow(this)">✕</button></td>`;
   totalRow.parentNode.insertBefore(tr, totalRow);
   bindPriceInputs(); tr.querySelector("td").focus(); recalcTotal();
+}
+/* add an editable row BELOW the Total (e.g. Discount, Round-off) — not summed */
+function addRowAfterTotal(){
+  const totalRow = document.getElementById("totalRow");
+  if(!totalRow) return;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td contenteditable="true">Discount</td>
+    <td class="amt" contenteditable="true">0/-</td>
+    <td class="no-print act"><button class="addb" onclick="addRowBelow(this)" title="Add row below">+</button><button class="del" onclick="delRow(this)" title="Delete row">✕</button></td>`;
+  totalRow.parentNode.insertBefore(tr, totalRow.nextSibling);
+  const first = tr.querySelector("td"); if(first) first.focus();
 }
 
 /* ---------- page 5: add tech-spec row ---------- */
@@ -1017,7 +1046,7 @@ function applyProject(data){
   projectCreatedAt = data.createdAt || new Date().toISOString();
   customSeq = Math.max(customSeq, getMaxCustomSeq());   // avoid id collisions
   ensureWarrantyPage();                                 // keep warranty card for older projects
-  ensurePageTools(); bindPriceInputs(); recalcTotal();
+  ensurePageTools(); bindPriceInputs(); normalizePriceTable(); recalcTotal();
   activeContent = null;
   History.reset();
   flash("Project opened ✓");
@@ -1152,7 +1181,7 @@ function restoreAutoSave(){
       projectCreatedAt = d.createdAt || projectCreatedAt;
       customSeq = Math.max(customSeq, getMaxCustomSeq());
       ensureWarrantyPage();                             // keep warranty card for older sessions
-      ensurePageTools(); bindPriceInputs(); recalcTotal();
+      ensurePageTools(); bindPriceInputs(); normalizePriceTable(); recalcTotal();
       flash("↩ Restored your last session");
     }
   }catch(e){}
@@ -1215,5 +1244,6 @@ buildEmojiPicker();
 setupPdfWorker();
 restoreAutoSave();              // bring back unsaved work, if any
 ensureWarrantyPage();           // re-add the warranty card if a restored session lacked it
+normalizePriceTable();          // ensure Total/GST + buttons and editable GST amount
 History.reset();               // fresh undo history at the current state
 setInterval(autoSave, 5000);   // auto-save every 5 seconds
