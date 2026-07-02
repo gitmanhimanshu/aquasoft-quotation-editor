@@ -141,6 +141,9 @@ function ensureWarrantyPage(){
     /* make the subtitle editable even on sessions saved before this change */
     const sub = wp.querySelector(".wc-sub");
     if(sub && sub.getAttribute("contenteditable") !== "true") sub.setAttribute("contenteditable", "true");
+    /* fix the banner spelling on sessions saved before this change */
+    const banner = wp.querySelector(".wc-banner");
+    if(banner && /rerquired/.test(banner.textContent)) banner.textContent = banner.textContent.replace(/rerquired/g, "required");
   }
   return wp;
 }
