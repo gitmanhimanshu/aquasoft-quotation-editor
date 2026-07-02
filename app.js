@@ -118,6 +118,54 @@ function downloadPDF(){
 }
 window.addEventListener("afterprint", hideLoader);   // safety net for non-blocking browsers
 
+/* ============================================================
+   WARRANTY CARD — separate editor view
+   The card is a .page inside pagesWrap, so Save / Open / Auto-save
+   all reuse the existing project system with no extra format.
+   A view mode (body.view-warranty) shows only the card.
+   ============================================================ */
+let WARRANTY_TEMPLATE = "";                 // pristine markup captured from index.html
+function captureWarrantyTemplate(){
+  const wp = pagesWrap && pagesWrap.querySelector(".warranty-page");
+  if(wp) WARRANTY_TEMPLATE = wp.outerHTML;
+}
+/* keep the warranty card present even for older projects saved before it existed */
+function ensureWarrantyPage(){
+  if(!pagesWrap) return null;
+  let wp = pagesWrap.querySelector(".warranty-page");
+  if(!wp && WARRANTY_TEMPLATE){
+    pagesWrap.insertAdjacentHTML("beforeend", WARRANTY_TEMPLATE);
+    wp = pagesWrap.querySelector(".warranty-page");
+  }
+  if(wp){
+    /* make the subtitle editable even on sessions saved before this change */
+    const sub = wp.querySelector(".wc-sub");
+    if(sub && sub.getAttribute("contenteditable") !== "true") sub.setAttribute("contenteditable", "true");
+  }
+  return wp;
+}
+function showWarranty(){
+  const wp = ensureWarrantyPage();
+  document.body.classList.add("view-warranty");
+  window.scrollTo({ top: 0, behavior: "auto" });
+  if(wp) wp.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function showBrochure(){
+  document.body.classList.remove("view-warranty");
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+/* start a blank warranty card (clears only the warranty fields; brochure untouched) */
+async function newWarranty(){
+  const wp = ensureWarrantyPage();
+  if(!wp) return;
+  const ok = await toastConfirm("Start a blank Warranty Card?<br><br>This clears only the warranty card fields — your brochure is not affected.");
+  if(!ok) return;
+  wp.querySelectorAll(".wc-val").forEach(v => v.innerHTML = "");
+  History.snapshot();
+  dirty = true; autoSave();          // persist immediately
+  flash("New warranty card ✓");
+}
+
 /* ---------- toast ---------- */
 function flash(msg){
   let t = document.getElementById("toast");
@@ -185,7 +233,7 @@ function pageToolsHTML(){
   </div>`;
 }
 function ensurePageTools(){
-  pagesWrap.querySelectorAll(":scope > .page").forEach(p => {
+  pagesWrap.querySelectorAll(":scope > .page:not(.warranty-page)").forEach(p => {
     if(!p.querySelector(":scope > .page-tools")) p.insertAdjacentHTML("beforeend", pageToolsHTML());
   });
 }
@@ -965,6 +1013,7 @@ function applyProject(data){
   pagesWrap.innerHTML = data.html;
   projectCreatedAt = data.createdAt || new Date().toISOString();
   customSeq = Math.max(customSeq, getMaxCustomSeq());   // avoid id collisions
+  ensureWarrantyPage();                                 // keep warranty card for older projects
   ensurePageTools(); bindPriceInputs(); recalcTotal();
   activeContent = null;
   History.reset();
@@ -1000,7 +1049,9 @@ function downloadBlob(blob, filename){
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-async function exportEditablePDF(){
+/* pageList : optional array of .page elements to export (defaults to the
+   whole brochure, excluding the warranty card). fileLabel : filename prefix. */
+async function exportEditablePDF(pageList, fileLabel){
   if(!window.html2canvas || !window.jspdf){ flash("PDF engine still loading — try again"); return; }
   showLoader("Building PDF… this can take a few seconds");
   document.body.classList.add("exporting");
@@ -1009,7 +1060,9 @@ async function exportEditablePDF(){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
     const W = 595.28, H = 841.89;
-    const pages = Array.from(pagesWrap.querySelectorAll(":scope > .page"));
+    const pages = (pageList && pageList.length)
+      ? pageList
+      : Array.from(pagesWrap.querySelectorAll(":scope > .page")).filter(p => !p.classList.contains("warranty-page"));
     for(let i = 0; i < pages.length; i++){
       const canvas = await html2canvas(pages[i], { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
       const img = canvas.toDataURL("image/jpeg", 0.92);
@@ -1022,10 +1075,17 @@ async function exportEditablePDF(){
     const full = new Uint8Array(bytes.length + payload.length);
     full.set(bytes, 0); full.set(payload, bytes.length);
     const stamp = new Date().toISOString().slice(0, 10);
-    downloadBlob(new Blob([full], { type: "application/pdf" }), "AquaSoft_Brochure_" + stamp + ".pdf");
+    downloadBlob(new Blob([full], { type: "application/pdf" }), (fileLabel || "AquaSoft_Brochure_") + stamp + ".pdf");
     flash("PDF saved ✓ (re-openable via Open Project)");
   }catch(err){ flash("Could not build PDF"); }
   finally{ document.body.classList.remove("exporting"); hideLoader(); }
+}
+/* Warranty card — editable PDF (only the warranty page; embedded data still
+   restores the whole project on Open Project) */
+function exportWarrantyPDF(){
+  const wp = ensureWarrantyPage();
+  if(!wp){ flash("Warranty card not available"); return; }
+  exportEditablePDF([wp], "AquaSoft_WarrantyCard_");
 }
 
 /* find a byte sequence inside a Uint8Array (search from the end) */
@@ -1064,6 +1124,13 @@ function autoSave(){
   try{ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(buildProject())); dirty = false; }
   catch(err){ /* storage full — silently skip; user can use Save Project */ }
 }
+/* flush the latest state to localStorage before the tab closes / PC shuts down */
+function flushSave(){
+  try{ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(buildProject())); dirty = false; }
+  catch(err){ /* ignore */ }
+}
+window.addEventListener("beforeunload", flushSave);
+window.addEventListener("pagehide", flushSave);
 
 /* start a fresh document and clear the restored/auto-saved session */
 async function newProject(){
@@ -1081,6 +1148,7 @@ function restoreAutoSave(){
       pagesWrap.innerHTML = d.html;
       projectCreatedAt = d.createdAt || projectCreatedAt;
       customSeq = Math.max(customSeq, getMaxCustomSeq());
+      ensureWarrantyPage();                             // keep warranty card for older sessions
       ensurePageTools(); bindPriceInputs(); recalcTotal();
       flash("↩ Restored your last session");
     }
@@ -1138,9 +1206,11 @@ document.getElementById("pdfInput").addEventListener("change", e => {
 bindPriceInputs();
 recalcTotal();
 initPagesWrap();
+captureWarrantyTemplate();      // snapshot the pristine warranty card markup
 ensurePageTools();
 buildEmojiPicker();
 setupPdfWorker();
 restoreAutoSave();              // bring back unsaved work, if any
+ensureWarrantyPage();           // re-add the warranty card if a restored session lacked it
 History.reset();               // fresh undo history at the current state
 setInterval(autoSave, 5000);   // auto-save every 5 seconds

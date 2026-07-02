@@ -13,23 +13,32 @@
 <!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=20260624s">
+<link rel="stylesheet" href="style.css?v=20260702w">
 </head>
 <body>
 
 <!-- ===================== TOOLBAR ===================== -->
 <div class="toolbar no-print">
   <div class="tb-left">
-    <strong>📄 Aqua Soft — Brochure Editor</strong>
+    <strong class="brochure-only">📄 Aqua Soft — Brochure Editor</strong>
+    <strong class="warranty-only">🛡 Aqua Soft — Warranty Card Editor</strong>
   </div>
   <div class="tb-right">
-    <button onclick="newProject()">🆕 New</button>
-    <button onclick="addCustomPageEnd()">➕ Custom Page</button>
-    <button onclick="document.getElementById('pdfInput').click()">📄 Import PDF</button>
+    <!-- brochure mode -->
+    <button class="brochure-only" onclick="newProject()">🆕 New</button>
+    <button class="brochure-only" onclick="addCustomPageEnd()">➕ Custom Page</button>
+    <button class="brochure-only" onclick="document.getElementById('pdfInput').click()">📄 Import PDF</button>
+    <button class="brochure-only" onclick="exportEditablePDF()">📦 Download PDF</button>
+    <button class="brochure-only primary" onclick="downloadPDF()">🧾 Non-Editable PDF</button>
+    <button class="brochure-only warranty-nav" onclick="showWarranty()">🛡 Edit Warranty Card</button>
+    <!-- warranty mode -->
+    <button class="warranty-only" onclick="showBrochure()">← Back to Brochure</button>
+    <button class="warranty-only" onclick="newWarranty()">🆕 New</button>
+    <button class="warranty-only" onclick="exportWarrantyPDF()">📦 Download PDF</button>
+    <button class="warranty-only primary" onclick="downloadPDF()">🧾 Non-Editable PDF</button>
+    <!-- shared -->
     <button onclick="openProject()">📂 Open Project</button>
     <button onclick="saveProject()">💾 Save Project</button>
-    <button onclick="exportEditablePDF()">📦 Download PDF</button>
-    <button class="primary" onclick="downloadPDF()">🧾 Non-Editable PDF</button>
   </div>
 </div>
 <input type="file" id="imgInput" accept="image/*" hidden>
@@ -294,6 +303,80 @@
 <div class="page"><img class="full" src="assets/pages/page_15.jpg" alt="Page 15"></div>
 <div class="page"><img class="full" src="assets/pages/page_16.jpg" alt="Page 16"></div>
 
-<script src="app.js?v=20260624s"></script>
+<!-- ============================================================
+     WARRANTY CARD — independent editor (shown via 🛡 Edit Warranty Card)
+     Lives inside pagesWrap so Save / Open / Auto-save all reuse the
+     existing project system. Only customer fields are editable.
+     ============================================================ -->
+<div class="page warranty-page">
+  <div class="wc epage" data-ep="warranty">
+
+    <!-- header (logo + certification — fixed) -->
+    <div class="wc-head">
+      <img class="wc-logo" src="assets/logo-warranty.png" alt="Sarah Aqua Soft">
+      <div class="wc-mfg">Mfg by : An ISO 9001:2015 Certified Co.</div>
+    </div>
+
+    <!-- title (fixed) -->
+    <h1 class="wc-title">Warranty Card</h1>
+    <div class="wc-sub" contenteditable="true">Water Cooler With Water Purifier</div>
+
+    <!-- retain banner (fixed) -->
+    <div class="wc-banner">Please retain this Warranty Card it will be rerquired for service under the Warranty Period</div>
+
+    <!-- customer information (editable) -->
+    <div class="wc-info">
+      <div class="wc-row"><span class="wc-lbl">Firm Name:-</span><span class="wc-val" contenteditable="true">DURGA CONSTRUTION</span></div>
+      <div class="wc-row"><span class="wc-lbl">Customer Name:-</span><span class="wc-val" contenteditable="true">DURGA CONSTRUTION</span></div>
+      <div class="wc-row"><span class="wc-lbl">Address:-</span><span class="wc-val" contenteditable="true">2/202 VISHAL KHAND 2 GOMTI NAGAR UTTAR PRADESH</span></div>
+      <div class="wc-row"><span class="wc-lbl">Installed At:-</span><span class="wc-val" contenteditable="true">KGMU BUILDINGP PROJECT</span></div>
+
+      <div class="wc-grid">
+        <div class="wc-row"><span class="wc-lbl">City:-</span><span class="wc-val" contenteditable="true">LUCKNOW</span></div>
+        <div class="wc-row"><span class="wc-lbl">Pin:-</span><span class="wc-val" contenteditable="true">226020</span></div>
+
+        <div class="wc-row"><span class="wc-lbl">Invoice No:-</span><span class="wc-val" contenteditable="true">KGM-334/MAR/2026</span></div>
+        <div class="wc-row"><span class="wc-lbl">Email:-</span><span class="wc-val" contenteditable="true"></span></div>
+
+        <div class="wc-row"><span class="wc-lbl">Mobile No:-</span><span class="wc-val" contenteditable="true">9304127381</span></div>
+        <div class="wc-row"><span class="wc-lbl">Date Of Supply:-</span><span class="wc-val" contenteditable="true">26/MARCH/2026</span></div>
+
+        <div class="wc-row wc-empty"></div>
+        <div class="wc-row"><span class="wc-lbl">Quantity:-</span><span class="wc-val" contenteditable="true">20 NOS</span></div>
+
+        <div class="wc-row wc-empty"></div>
+        <div class="wc-row"><span class="wc-lbl">Product Name:-</span><span class="wc-val" contenteditable="true">150 LTR Water Cooler with 60 LPH RO System</span></div>
+      </div>
+    </div>
+
+    <!-- service contact box (labels fixed, values editable) -->
+    <div class="wc-service">
+      <div class="wc-service-head">For Service Contact</div>
+      <div class="wc-service-body">
+        <div class="wc-row"><span class="wc-lbl">Service Provider's Name:-</span><span class="wc-val" contenteditable="true">Sarah Aquasoft</span></div>
+        <div class="wc-row"><span class="wc-lbl">Service Provider's Address:-</span><span class="wc-val" contenteditable="true">WZ-106/25-26 Village Tatrpur Colony, Rajouri Garden Extention New Delhi - 110027</span></div>
+        <div class="wc-row"><span class="wc-val" contenteditable="true"></span></div>
+        <div class="wc-row"><span class="wc-lbl">Phone Number:-</span><span class="wc-val" contenteditable="true">01145510557,  9910493828</span></div>
+      </div>
+    </div>
+
+    <!-- warranty conditions 1-10 (fixed) -->
+    <ol class="wc-terms">
+      <li>The customer will notify the Company in writing along with the original Invoice..</li>
+      <li>This is the sole responsibility of the Company to provide satisfactory service to his customer during the warranty period.</li>
+      <li>The customer will deposit the goods in the service center if so required.</li>
+      <li>Inspection and test report of the Company/service center will be final for determining the defects under the warranty</li>
+      <li>The Company/service center will be entitled to retain any defective part replaced under the warranty.</li>
+      <li>Warranty shall be limited to the first sale of the goods by the company to the customer.</li>
+      <li>Consumables such as sediment filter, reverse osmosis membrane and activated carbon filters which are subject to normal wear &amp; tear in course of use are not covered by this warranty.</li>
+      <li>Warranty shall remain valid only if goods are duly installed by the company at the location specified in the invoice.</li>
+      <li>The customer will have no claim against the company in respect of any loss Damage caused by or due to mishandling of the equipment.</li>
+      <li>Repair / Replacement warranty will be carried out only by the dealer from which the system has been purchased.</li>
+    </ol>
+
+  </div>
+</div>
+
+<script src="app.js?v=20260702w"></script>
 </body>
 </html>
