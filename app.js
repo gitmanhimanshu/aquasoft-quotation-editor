@@ -14,12 +14,9 @@ function formatIN(num){
 }
 
 /* ---------- auto total (page 2) ---------- */
-function recalcTotal(){
-  let sum = 0;
-  document.querySelectorAll("#priceTable tbody tr:not(.total):not(.gst) .price").forEach(td=> sum += toNumber(td.textContent));
-  const gt = document.getElementById("grandTotal");
-  if(gt) gt.textContent = formatIN(sum) + "/-";
-}
+/* Total is now typed by hand — auto-calculation removed.
+   Kept as a no-op so existing calls throughout the app stay valid. */
+function recalcTotal(){ /* manual total: do not overwrite #grandTotal */ }
 function bindPriceInputs(){
   document.querySelectorAll("#priceTable tbody tr:not(.total):not(.gst) .price").forEach(td=> td.oninput = recalcTotal);
 }
@@ -28,6 +25,9 @@ function bindPriceInputs(){
 function normalizePriceTable(){
   const totalRow = document.getElementById("totalRow");
   if(totalRow){
+    /* make the Total amount editable (manual total, no auto-calculation) */
+    const gt = totalRow.querySelector("#grandTotal");
+    if(gt && gt.getAttribute("contenteditable") !== "true") gt.setAttribute("contenteditable", "true");
     const act = totalRow.querySelector(".act");
     /* always set (also migrates older sessions that added rows above the total) */
     if(act) act.innerHTML = '<button class="addb" onclick="addRowAfterTotal()" title="Add row below (e.g. Discount)">+</button>';
