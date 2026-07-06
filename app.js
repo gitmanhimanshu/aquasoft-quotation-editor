@@ -30,7 +30,7 @@ function normalizePriceTable(){
     if(gt && gt.getAttribute("contenteditable") !== "true") gt.setAttribute("contenteditable", "true");
     const act = totalRow.querySelector(".act");
     /* always set (also migrates older sessions that added rows above the total) */
-    if(act) act.innerHTML = '<button class="addb" onclick="addRowAfterTotal()" title="Add row below (e.g. Discount)">+</button>';
+    if(act) act.innerHTML = '<button class="addb" onclick="addRowAfterTotal()" title="Add row below (e.g. Discount)">+</button><button class="del" onclick="delRow(this)" title="Delete row">✕</button>';
   }
   const gst = document.querySelector("#priceTable tr.gst");
   if(gst){
@@ -60,8 +60,10 @@ function addPriceRow(){
   const tr = document.createElement("tr");
   tr.innerHTML = `<td contenteditable="true">New item</td>
     <td class="amt price" contenteditable="true">0/-</td>
-    <td class="no-print act"><button class="del" onclick="delRow(this)">✕</button></td>`;
-  totalRow.parentNode.insertBefore(tr, totalRow);
+    <td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td>`;
+  /* insert above the Total if present, else just append (Total may have been deleted) */
+  if(totalRow) totalRow.parentNode.insertBefore(tr, totalRow);
+  else document.querySelector("#priceTable tbody").appendChild(tr);
   bindPriceInputs(); tr.querySelector("td").focus(); recalcTotal();
 }
 /* add an editable row BELOW the Total (e.g. Discount, Round-off) — not summed */
