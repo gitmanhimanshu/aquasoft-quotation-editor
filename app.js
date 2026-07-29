@@ -55,47 +55,266 @@ function addRowBelow(btn){
   const first = clone.querySelector('[contenteditable="true"]');
   if(first) first.focus();
 }
+/* clone an existing row as the template so any extra dynamic columns
+   (e.g. a numbering column) are carried along automatically */
+function cloneRowBlank(template, actHTML){
+  const tr = template.cloneNode(true);
+  Array.from(tr.cells).forEach(td=>{
+    if(td.classList.contains("act")){ if(actHTML) td.innerHTML = actHTML; }
+    else if(td.getAttribute("contenteditable") === "true") td.innerHTML = "";
+  });
+  return tr;
+}
 function addPriceRow(){
+  const tbody = document.querySelector("#priceTable tbody");
   const totalRow = document.getElementById("totalRow");
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td contenteditable="true">New item</td>
-    <td class="amt price" contenteditable="true">0/-</td>
-    <td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td>`;
-  /* insert above the Total if present, else just append (Total may have been deleted) */
+  const template = tbody.querySelector("tr:not(.total):not(.gst)") || tbody.rows[0];
+  const tr = cloneRowBlank(template, '<button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button>');
   if(totalRow) totalRow.parentNode.insertBefore(tr, totalRow);
-  else document.querySelector("#priceTable tbody").appendChild(tr);
-  bindPriceInputs(); tr.querySelector("td").focus(); recalcTotal();
+  else tbody.appendChild(tr);
+  bindPriceInputs();
+  const first = tr.querySelector('[contenteditable="true"]'); if(first) first.focus();
+  recalcTotal();
 }
 /* add an editable row BELOW the Total (e.g. Discount, Round-off) — not summed */
 function addRowAfterTotal(){
   const totalRow = document.getElementById("totalRow");
   if(!totalRow) return;
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td contenteditable="true">Discount</td>
-    <td class="amt" contenteditable="true">0/-</td>
-    <td class="no-print act"><button class="addb" onclick="addRowBelow(this)" title="Add row below">+</button><button class="del" onclick="delRow(this)" title="Delete row">✕</button></td>`;
+  const tbody = totalRow.parentNode;
+  const template = tbody.querySelector("tr:not(.total):not(.gst)");
+  if(!template) return;
+  const tr = cloneRowBlank(template, '<button class="addb" onclick="addRowBelow(this)" title="Add row below">+</button><button class="del" onclick="delRow(this)" title="Delete row">✕</button>');
   totalRow.parentNode.insertBefore(tr, totalRow.nextSibling);
-  const first = tr.querySelector("td"); if(first) first.focus();
+  const first = tr.querySelector('[contenteditable="true"]'); if(first) first.focus();
 }
+
+/* ============================================================
+   DYNAMIC TABLE COLUMNS — add / move / delete / resize columns
+   on any table (priceTable, techTable, elemTable, custom .ctable):
+   columns are no longer fixed to two — insert one anywhere,
+   reorder it, delete it, drag its border to resize, or turn it
+   into an auto-numbering column (1,2,3… or A,B,C…).
+   ============================================================ */
+function dynTableRows(table){
+  const rows = [];
+  if(table.tHead) rows.push(...table.tHead.rows);
+  Array.from(table.tBodies).forEach(tb => rows.push(...tb.rows));
+  return rows;
+}
+function dynHeaderRow(table){
+  return table.tHead ? table.tHead.rows[0] : (table.tBodies[0] && table.tBodies[0].rows[0]);
+}
+function dynColCount(table){
+  const hr = dynHeaderRow(table);
+  if(!hr) return 0;
+  let n = hr.cells.length;
+  if(n && hr.cells[n-1].classList.contains("act")) n--;
+  return n;
+}
+function decorateHeaderCell(cell){
+  if(cell.classList.contains("act")) return;
+  cell.classList.add("dyn-th");
+  if(cell.querySelector(':scope > .col-tools')) return;
+  cell.insertAdjacentHTML("afterbegin",
+    `<span class="col-tools no-print" contenteditable="false">`+
+      `<button data-action="col-move-left" title="Move column left">◄</button>`+
+      `<button data-action="col-add-num" title="Insert a numbering column here (1,2,3…)">🔢</button>`+
+      `<button data-action="col-add-alpha" title="Insert a lettered column here (A,B,C…)">🔤</button>`+
+      `<button data-action="col-del" title="Delete this column">✕</button>`+
+      `<button data-action="col-move-right" title="Move column right">►</button>`+
+    `</span>`+
+    `<span class="col-resize no-print" data-action="col-resize" contenteditable="false" title="Drag to resize column width"></span>`);
+}
+function decorateTableHeader(table){
+  const hr = dynHeaderRow(table);
+  if(!hr) return;
+  Array.from(hr.cells).forEach(decorateHeaderCell);
+}
+function decorateAllTables(){
+  document.querySelectorAll("#priceTable, #techTable, #elemTable, .ctable").forEach(decorateTableHeader);
+}
+function dynEnsureColgroup(table){
+  const hr = dynHeaderRow(table);
+  if(!hr) return null;
+  const total = hr.cells.length;
+  let cg = table.querySelector(":scope > colgroup");
+  if(!cg){
+    cg = document.createElement("colgroup");
+    const tw = table.getBoundingClientRect().width || 1;
+    for(let i=0;i<total;i++){
+      const col = document.createElement("col");
+      const w = hr.cells[i].getBoundingClientRect().width;
+      col.style.width = Math.max(5, (w/tw*100)).toFixed(2) + "%";
+      cg.appendChild(col);
+    }
+    table.insertBefore(cg, table.firstChild);
+    table.style.tableLayout = "fixed";
+  }else{
+    while(cg.children.length < total) cg.appendChild(document.createElement("col"));
+    while(cg.children.length > total) cg.removeChild(cg.lastChild);
+  }
+  return cg;
+}
+function numToAlpha(n){
+  let s = "";
+  while(n > 0){ n--; s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26); }
+  return s;
+}
+function dynRenumber(table){
+  const idxStr = table.dataset.numcol; if(idxStr == null) return;
+  const idx = Number(idxStr);
+  const alpha = table.dataset.numstyle === "alpha";
+  const body = table.tBodies[0]; if(!body) return;
+  const hr = dynHeaderRow(table);
+  let n = 1;
+  Array.from(body.rows).forEach(r=>{
+    if(r === hr) return;                                     // skip the pseudo-header row of a headless (.ctable) table
+    if(r.classList.contains("total") || r.classList.contains("gst")) return;
+    const c = r.cells[idx];
+    if(c) c.textContent = alpha ? numToAlpha(n) : String(n);
+    n++;
+  });
+}
+const _numObserved = new WeakSet();
+function dynWatchNumbering(table){
+  if(_numObserved.has(table)) return;
+  _numObserved.add(table);
+  const body = table.tBodies[0]; if(!body) return;
+  new MutationObserver(()=> dynRenumber(table)).observe(body, { childList:true });
+}
+/* insert a new column at opts.beforeIndex (0-based; existing columns from that
+   position onward shift right), or right before the action (no-print) column
+   — i.e. at the end of the data columns — when beforeIndex is omitted.
+   opts: {label, fill, numbering, style:'numeric'|'alpha', beforeIndex} */
+function dynAddColumn(table, opts){
+  opts = opts || {};
+  const hr = dynHeaderRow(table);
+  if(!hr) return;
+  const hasAct = hr.cells.length && hr.cells[hr.cells.length-1].classList.contains("act");
+  const maxIdx = hasAct ? hr.cells.length - 1 : hr.cells.length;
+  const insertIdx = (opts.beforeIndex != null) ? Math.max(0, Math.min(opts.beforeIndex, maxIdx)) : maxIdx;
+  dynEnsureColgroup(table);
+  dynTableRows(table).forEach(row=>{
+    const isHeadRow = (row === hr);
+    const isTHead = row.parentElement && row.parentElement.tagName === "THEAD";
+    const cell = document.createElement(isTHead ? "th" : "td");
+    cell.contentEditable = "true";
+    if(isHeadRow) cell.textContent = opts.label || (isTHead ? "New Column" : (opts.fill != null ? opts.fill : "Cell"));
+    else cell.textContent = opts.fill != null ? opts.fill : "";
+    row.insertBefore(cell, row.cells[insertIdx] || null);
+    if(isHeadRow) decorateHeaderCell(cell);
+  });
+  const cg = table.querySelector(":scope > colgroup");
+  if(cg){
+    const newW = 16;
+    Array.from(cg.children).forEach(c=>{
+      const cur = parseFloat(c.style.width) || (100/cg.children.length);
+      c.style.width = (cur * (100-newW)/100).toFixed(2) + "%";
+    });
+    const col = document.createElement("col");
+    col.style.width = newW + "%";
+    cg.insertBefore(col, cg.children[insertIdx] || null);
+  }
+  if(opts.numbering){
+    table.dataset.numcol = String(insertIdx);
+    table.dataset.numstyle = opts.style === "alpha" ? "alpha" : "numeric";
+    dynWatchNumbering(table);
+    dynRenumber(table);
+  }else if(table.dataset.numcol != null && Number(table.dataset.numcol) >= insertIdx){
+    table.dataset.numcol = String(Number(table.dataset.numcol) + 1);
+  }
+  History.snapshot();
+}
+function dynDeleteColumn(table, index){
+  if(index < 0) return;
+  if(dynColCount(table) <= 1){ flash("Table needs at least one column"); return; }
+  dynTableRows(table).forEach(row=>{ if(row.cells[index]) row.deleteCell(index); });
+  const cg = table.querySelector(":scope > colgroup");
+  if(cg && cg.children[index]){
+    const removedW = parseFloat(cg.children[index].style.width) || (100/cg.children.length);
+    cg.children[index].remove();
+    const remaining = Array.from(cg.children);
+    const factor = remaining.length ? 100/Math.max(1,(100-removedW)) : 1;
+    remaining.forEach(c=>{
+      const cur = parseFloat(c.style.width) || (100/remaining.length);
+      c.style.width = Math.min(100, cur*factor).toFixed(2)+"%";
+    });
+  }
+  if(table.dataset.numcol != null){
+    const nc = Number(table.dataset.numcol);
+    if(nc === index) delete table.dataset.numcol;
+    else if(nc > index) table.dataset.numcol = String(nc-1);
+  }
+  History.snapshot();
+}
+function dynMoveColumn(table, index, dir){
+  if(index < 0) return;
+  const target = index + dir;
+  if(target < 0 || target >= dynColCount(table)) return;
+  dynTableRows(table).forEach(row=>{
+    const a = row.cells[index], b = row.cells[target];
+    if(!a || !b) return;
+    if(dir < 0) row.insertBefore(a, b); else row.insertBefore(b, a);
+  });
+  const cg = table.querySelector(":scope > colgroup");
+  if(cg){
+    const a = cg.children[index], b = cg.children[target];
+    if(a && b){ if(dir<0) cg.insertBefore(a,b); else cg.insertBefore(b,a); }
+  }
+  if(table.dataset.numcol != null){
+    const nc = Number(table.dataset.numcol);
+    if(nc === index) table.dataset.numcol = String(target);
+    else if(nc === target) table.dataset.numcol = String(index);
+  }
+  History.snapshot();
+}
+/* drag-resize a column border (data-action="col-resize", placed in each header cell) */
+document.addEventListener("mousedown", e=>{
+  const h = e.target.closest('[data-action="col-resize"]');
+  if(!h) return;
+  e.preventDefault(); e.stopPropagation();
+  const th = h.closest("th,td");
+  const table = h.closest("table");
+  const hr = dynHeaderRow(table);
+  const idx = Array.from(hr.cells).indexOf(th);
+  if(idx < 0) return;
+  dynEnsureColgroup(table);
+  const cg = table.querySelector(":scope > colgroup");
+  const cols = Array.from(cg.children);
+  const nextIdx = idx+1 < cols.length ? idx+1 : -1;
+  const tableRect = table.getBoundingClientRect();
+  const startX = e.clientX;
+  const startW = parseFloat(cols[idx].style.width) || (100/cols.length);
+  const startNextW = nextIdx>=0 ? (parseFloat(cols[nextIdx].style.width) || (100/cols.length)) : null;
+  function move(ev){
+    const dPct = (ev.clientX - startX) / tableRect.width * 100;
+    let w = Math.max(6, startW + dPct);
+    if(nextIdx>=0){
+      let nw = startNextW - (w - startW);
+      if(nw < 6){ nw = 6; w = startW + (startNextW - 6); }
+      cols[nextIdx].style.width = nw.toFixed(2)+"%";
+    }
+    cols[idx].style.width = w.toFixed(2)+"%";
+  }
+  function up(){ document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up); History.snapshot(); }
+  document.addEventListener("mousemove", move);
+  document.addEventListener("mouseup", up);
+});
 
 /* ---------- page 5: add tech-spec row ---------- */
 function addTechRow(){
   const tb = document.querySelector("#techTable tbody");
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td contenteditable="true">New label</td>
-    <td contenteditable="true">New value</td>
-    <td class="no-print act"><button class="del" onclick="delRow(this)">✕</button></td>`;
-  tb.appendChild(tr); tr.querySelector("td").focus();
+  const tr = cloneRowBlank(tb.rows[0], '<button class="del" onclick="delRow(this)">✕</button>');
+  tb.appendChild(tr);
+  const first = tr.querySelector('[contenteditable="true"]'); if(first) first.focus();
 }
 
 /* ---------- page 7: add elements row ---------- */
 function addElemRow(){
   const tb = document.querySelector("#elemTable tbody");
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td contenteditable="true">New element</td>
-    <td contenteditable="true">1</td>
-    <td class="no-print act"><button class="del" onclick="delRow(this)">✕</button></td>`;
-  tb.appendChild(tr); tr.querySelector("td").focus();
+  const tr = cloneRowBlank(tb.rows[0], '<button class="del" onclick="delRow(this)">✕</button>');
+  tb.appendChild(tr);
+  const first = tr.querySelector('[contenteditable="true"]'); if(first) first.focus();
 }
 
 /* ---------- image slots (click-to-replace) ---------- */
@@ -291,6 +510,8 @@ function tableMarkup(rows, cols){
     <div class="table-ctl no-print">
       <button data-action="t-addrow">+ Row</button><button data-action="t-addcol">+ Col</button>
       <button data-action="t-delrow">– Row</button><button data-action="t-delcol">– Col</button>
+      <button data-action="t-addnum" title="Add a numbered column">🔢 1,2,3…</button>
+      <button data-action="t-addalpha" title="Add a lettered column">🔤 A,B,C…</button>
     </div>`;
 }
 /* one editable text row (with hover delete) inside an image+text layout */
@@ -391,6 +612,7 @@ function insertBlock(type){
   const node = htmlToNode(blockHTML(type));
   const cur = currentBlock(content);
   if(cur) cur.after(node); else content.appendChild(node);
+  node.querySelectorAll(".ctable").forEach(decorateTableHeader);
   focusFirstEditable(node);
   History.snapshot();
 }
@@ -411,9 +633,9 @@ function delBlock(block){ if(!block) return; const content = block.closest(".cus
 function tableOf(btn){ return btn.closest(".block").querySelector(".ctable"); }
 function tableAddRow(btn){ const t = tableOf(btn); const cols = t.rows[0].cells.length; const tr = t.insertRow(-1);
   for(let i=0;i<cols;i++){ const td = tr.insertCell(-1); td.contentEditable = "true"; td.textContent = "Cell"; } History.snapshot(); }
-function tableAddCol(btn){ const t = tableOf(btn); for(const row of t.rows){ const td = row.insertCell(-1); td.contentEditable = "true"; td.textContent = "Cell"; } History.snapshot(); }
+function tableAddCol(btn){ dynAddColumn(tableOf(btn), { fill:"Cell" }); }
 function tableDelRow(btn){ const t = tableOf(btn); if(t.rows.length > 1) t.deleteRow(-1); History.snapshot(); }
-function tableDelCol(btn){ const t = tableOf(btn); if(t.rows[0].cells.length > 1){ for(const row of t.rows) row.deleteCell(-1); } History.snapshot(); }
+function tableDelCol(btn){ const t = tableOf(btn); dynDeleteColumn(t, dynColCount(t) - 1); }
 
 /* ---- image+text layout: text rows ---- */
 function layoutAddRow(btn){
@@ -954,6 +1176,14 @@ document.addEventListener("click", e => {
     case "fb-move":  break;   /* handled by mousedown */
     case "fb-resize":break;   /* handled by mousedown */
     case "img-resize": break; /* handled by mousedown listener */
+    case "col-resize": break; /* handled by mousedown listener */
+    case "col-move-left":  { const th = btn.closest("th,td"); const table = btn.closest("table"); const hr = dynHeaderRow(table); dynMoveColumn(table, Array.from(hr.cells).indexOf(th), -1); break; }
+    case "col-move-right": { const th = btn.closest("th,td"); const table = btn.closest("table"); const hr = dynHeaderRow(table); dynMoveColumn(table, Array.from(hr.cells).indexOf(th),  1); break; }
+    case "col-del":         { const th = btn.closest("th,td"); const table = btn.closest("table"); const hr = dynHeaderRow(table); dynDeleteColumn(table, Array.from(hr.cells).indexOf(th)); break; }
+    case "col-add-num":     { const th = btn.closest("th,td"); const table = btn.closest("table"); const hr = dynHeaderRow(table); dynAddColumn(table, { numbering:true, label:"S.No.", style:"numeric", beforeIndex: Array.from(hr.cells).indexOf(th) }); break; }
+    case "col-add-alpha":   { const th = btn.closest("th,td"); const table = btn.closest("table"); const hr = dynHeaderRow(table); dynAddColumn(table, { numbering:true, label:"S.No.", style:"alpha",   beforeIndex: Array.from(hr.cells).indexOf(th) }); break; }
+    case "t-addnum":   dynAddColumn(tableOf(btn), { numbering:true, label:"S.No.", style:"numeric" }); break;
+    case "t-addalpha": dynAddColumn(tableOf(btn), { numbering:true, label:"S.No.", style:"alpha"   }); break;
     case "imp-replace-bg": { const im = btn.closest(".page").querySelector("img.full"); if(im){ slotImg = im; imgPickCb = null; document.getElementById("imgInput").click(); } break; }
     /* image + text layout rows */
     case "layout-addrow": layoutAddRow(btn); break;
@@ -1048,7 +1278,7 @@ function applyProject(data){
   projectCreatedAt = data.createdAt || new Date().toISOString();
   customSeq = Math.max(customSeq, getMaxCustomSeq());   // avoid id collisions
   ensureWarrantyPage();                                 // keep warranty card for older projects
-  ensurePageTools(); bindPriceInputs(); normalizePriceTable(); recalcTotal();
+  ensurePageTools(); bindPriceInputs(); normalizePriceTable(); recalcTotal(); decorateAllTables();
   activeContent = null;
   History.reset();
   flash("Project opened ✓");
@@ -1183,7 +1413,7 @@ function restoreAutoSave(){
       projectCreatedAt = d.createdAt || projectCreatedAt;
       customSeq = Math.max(customSeq, getMaxCustomSeq());
       ensureWarrantyPage();                             // keep warranty card for older sessions
-      ensurePageTools(); bindPriceInputs(); normalizePriceTable(); recalcTotal();
+      ensurePageTools(); bindPriceInputs(); normalizePriceTable(); recalcTotal(); decorateAllTables();
       flash("↩ Restored your last session");
     }
   }catch(e){}
@@ -1247,5 +1477,6 @@ setupPdfWorker();
 restoreAutoSave();              // bring back unsaved work, if any
 ensureWarrantyPage();           // re-add the warranty card if a restored session lacked it
 normalizePriceTable();          // ensure Total/GST + buttons and editable GST amount
+decorateAllTables();             // add per-column move/delete/resize controls to every table
 History.reset();               // fresh undo history at the current state
 setInterval(autoSave, 5000);   // auto-save every 5 seconds

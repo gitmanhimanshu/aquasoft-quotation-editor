@@ -338,6 +338,26 @@ body{ font-family:"Calibri","Segoe UI",Arial,sans-serif; background:#5a6b7b; pad
   .fb-text, .fb-emoji{ outline:none !important; background:transparent !important; }
 }
 
+/* =========================================================
+   DYNAMIC TABLE COLUMNS (price / tech / elements / .ctable)
+   ========================================================= */
+.dyn-th{ position:relative; }
+.col-tools{ position:absolute; top:-15px; left:50%; transform:translateX(-50%);
+  display:none; gap:2px; z-index:20; white-space:nowrap; background:#fff; padding:2px; border-radius:5px;
+  box-shadow:0 2px 8px rgba(0,0,0,.25); }
+.dyn-th:hover .col-tools, .dyn-th:focus-within .col-tools{ display:flex; }
+.col-tools button{ border:none; background:#1f6fb0; color:#fff; width:18px; height:18px; border-radius:4px;
+  cursor:pointer; font-size:10px; font-weight:700; line-height:1; padding:0; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+.col-tools button:hover{ background:#0b5fa5; }
+.col-tools button[data-action="col-del"]{ background:#c0392b; }
+.col-tools button[data-action="col-del"]:hover{ background:#a52f22; }
+.col-tools button[data-action="col-add-num"],
+.col-tools button[data-action="col-add-alpha"]{ background:#1f9d55; }
+.col-tools button[data-action="col-add-num"]:hover,
+.col-tools button[data-action="col-add-alpha"]:hover{ background:#178244; }
+.col-resize{ position:absolute; top:0; right:-3px; bottom:0; width:6px; cursor:col-resize; z-index:15; }
+.col-resize:hover, .col-resize:active{ background:rgba(47,143,208,.35); }
+
 /* table block */
 .ctable{ width:100%; border-collapse:collapse; }
 .ctable td{ border:1px solid #9bb6d6; padding:6px 9px; font-size:12pt; min-width:32px; vertical-align:top; }

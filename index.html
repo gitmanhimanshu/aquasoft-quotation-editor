@@ -13,7 +13,7 @@
 <!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=20260702w">
+<link rel="stylesheet" href="style.css?v=20260729b">
 </head>
 <body>
 
@@ -139,6 +139,9 @@
       </tbody>
     </table>
     <button class="addrow no-print" onclick="addPriceRow()">+ Add Item Row</button>
+    <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('priceTable'))">▥ Add Column</button>
+    <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('priceTable'),{numbering:true,label:'S.No.',style:'numeric'})">🔢 1,2,3…</button>
+    <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('priceTable'),{numbering:true,label:'S.No.',style:'alpha'})">🔤 A,B,C…</button>
     <div class="letter">
       <p contenteditable="true">Dear Sir</p>
       <p contenteditable="true">This with reference to your discussion held with you regarding your requirement for Water Vending Machine. The capacity of the Water Vending Machine is 1000 LPH. Kindly find below technical details, special features, scope of supply &amp; Commercial offer for your kind consideration.</p>
@@ -207,6 +210,9 @@
         </tbody>
       </table>
       <button class="addrow no-print" onclick="addTechRow()">+ Add Row</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('techTable'))">▥ Add Column</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('techTable'),{numbering:true,label:'S.No.',style:'numeric'})">🔢 1,2,3…</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('techTable'),{numbering:true,label:'S.No.',style:'alpha'})">🔤 A,B,C…</button>
     </div>
   </div>
 </div>
@@ -261,6 +267,9 @@
         </tbody>
       </table>
       <button class="addrow no-print" onclick="addElemRow()">+ Add Row</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('elemTable'))">▥ Add Column</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('elemTable'),{numbering:true,label:'S.No.',style:'numeric'})">🔢 1,2,3…</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('elemTable'),{numbering:true,label:'S.No.',style:'alpha'})">🔤 A,B,C…</button>
     </div>
   </div>
 </div>
@@ -377,6 +386,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260702w"></script>
+<script src="app.js?v=20260729b"></script>
 </body>
 </html>
