@@ -1,28 +1,391 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Security Assessment — Proof of Compromise</title>
-<style>
-  body { background: #0d1117; color: #e6edf3; font-family: system-ui, sans-serif; display: flex; justify-content: center; padding: 8vh 2rem; }
-  .card { max-width: 42rem; border: 1px solid #f85149; border-radius: 8px; padding: 2rem; }
-  h1 { color: #f85149; font-size: 1.3rem; }
-  code { background: #161b22; padding: 0.15rem 0.4rem; border-radius: 4px; }
-</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aqua Soft — 1000 LPH Quotation (pages 1–8, editable)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- PDF.js (experimental "Import PDF" feature) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Editable PDF: html2canvas (rasterize pages) + jsPDF (assemble) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="style.css?v=20260729b">
 </head>
 <body>
-<div class="card">
-  <h1>&#9888; SECURITY ASSESSMENT &mdash; PROOF OF COMPROMISE</h1>
-  <p>This page was modified through a push to the source repository using a
-  compromised repository credential. No visitor data was collected and no
-  malicious code was executed.</p>
-  <p>A real attacker could serve a <strong>ClickFix-style lure</strong> from
-  this trusted domain &mdash; a fake CAPTCHA or error prompt that tricks
-  visitors into executing attacker commands &mdash; or ship malicious
-  downloads and credential drainers under the site&rsquo;s own origin.</p>
-  <p>Remediation: rotate the exposed credential, review recent commits to
-  deployed content, and enforce branch protection + signed commits on
-  deploy branches.</p>
+
+<!-- ===================== TOOLBAR ===================== -->
+<div class="toolbar no-print">
+  <div class="tb-left">
+    <strong class="brochure-only">📄 Aqua Soft — Brochure Editor</strong>
+    <strong class="warranty-only">🛡 Aqua Soft — Warranty Card Editor</strong>
+  </div>
+  <div class="tb-right">
+    <!-- brochure mode -->
+    <button class="brochure-only" onclick="newProject()">🆕 New</button>
+    <button class="brochure-only" onclick="addCustomPageEnd()">➕ Custom Page</button>
+    <button class="brochure-only" onclick="document.getElementById('pdfInput').click()">📄 Import PDF</button>
+    <button class="brochure-only" onclick="exportEditablePDF()">📦 Download PDF</button>
+    <button class="brochure-only primary" onclick="downloadPDF()">🧾 Non-Editable PDF</button>
+    <button class="brochure-only warranty-nav" onclick="showWarranty()">🛡 Edit Warranty Card</button>
+    <!-- warranty mode -->
+    <button class="warranty-only" onclick="showBrochure()">← Back to Brochure</button>
+    <button class="warranty-only" onclick="newWarranty()">🆕 New</button>
+    <button class="warranty-only" onclick="exportWarrantyPDF()">📦 Download PDF</button>
+    <button class="warranty-only primary" onclick="downloadPDF()">🧾 Non-Editable PDF</button>
+    <!-- shared -->
+    <button onclick="openProject()">📂 Open Project</button>
+    <button onclick="saveProject()">💾 Save Project</button>
+  </div>
 </div>
+<input type="file" id="imgInput" accept="image/*" hidden>
+<input type="file" id="jsonInput" accept="application/json" hidden>
+<input type="file" id="projInput" accept=".aqs,.json,.pdf,application/json,application/pdf" hidden>
+<input type="file" id="pdfInput" accept="application/pdf,.pdf" hidden>
+
+<!-- ===================== LOADING OVERLAY ===================== -->
+<div id="loader">
+  <div class="loader-box">
+    <div class="spinner"></div>
+    <div class="loader-msg" id="loaderMsg">Working…</div>
+    <div class="loader-sub">Please wait, do not close this tab</div>
+  </div>
+</div>
+
+<!-- ===================== EMOJI PICKER ===================== -->
+<div id="emojiPicker" class="no-print"></div>
+
+<!-- ===================== FLOATING BLOCK TOOLBAR (custom pages) ===================== -->
+<div class="float-toolbar no-print" id="floatBar">
+  <div class="ft-group ft-format">
+    <button data-action="fmt-bold" title="Bold"><b>B</b></button>
+    <button data-action="fmt-italic" title="Italic"><i>I</i></button>
+    <button data-action="fmt-underline" title="Underline"><u>U</u></button>
+    <button data-action="font-bigger" title="Increase text size">A⏶</button>
+    <button data-action="font-smaller" title="Decrease text size">A⏷</button>
+    <label class="ft-color" title="Text color">A<input type="color" id="textColor" value="#1c3f94"></label>
+  </div>
+  <div class="ft-group ft-align">
+    <button data-action="align-left" title="Align left">◄</button>
+    <button data-action="align-center" title="Center">▦</button>
+    <button data-action="align-right" title="Align right">►</button>
+  </div>
+  <div class="ft-insert">
+    <button data-action="add-textbox" class="ft-textbox" title="Add a draggable text box to the current page">🆎 Text Box</button>
+    <button data-action="add-imagebox" class="ft-textbox" title="Add a draggable image to the current page">🖼️ Image Box</button>
+    <button data-action="toggle-emoji" class="ft-textbox" title="Add an emoji to the current page">😀 Emoji</button>
+    <button data-action="ins-heading">＋ Heading</button>
+    <button data-action="ins-paragraph">＋ Text</button>
+    <button data-action="ins-image">＋ Image</button>
+    <button data-action="ins-list">＋ List</button>
+    <button data-action="ins-cols2">＋ 2-Col</button>
+    <button data-action="ins-cols3">＋ 3-Col</button>
+    <button data-action="ins-table">＋ Table</button>
+    <button data-action="ins-img-left">＋ Img Left</button>
+    <button data-action="ins-img-right">＋ Img Right</button>
+    <button data-action="ins-img-both">＋ Img Both</button>
+  </div>
+  <div class="ft-group ft-history">
+    <button data-action="undo" title="Undo">↶ Undo</button>
+    <button data-action="redo" title="Redo">↷ Redo</button>
+  </div>
+</div>
+
+<!-- ===== PAGE 1 — COVER (editable: photo slot + text) ===== -->
+<div class="page">
+  <div class="epage" data-ep="p1">
+    <img class="full" src="assets/pages/page_01.jpg" alt="Cover">
+    <!-- hand/product photo slot (individually replaceable) -->
+    <div class="photoslot" style="left:9%;top:29%;width:82%;height:26%"><button class="ps slot-btn no-print" onclick="replaceImg(this)"><i class="fa-solid fa-image"></i></button></div>
+    <!-- editable title (white box masks baked text) -->
+    <div class="cov-title-edit" style="left:6%;top:62.8%;width:88%;height:5.2%;" contenteditable="true">1000 LPH RO System With KIOSK</div>
+  </div>
+</div>
+
+<!-- ===== PAGE 2 — QUOTATION (EDITABLE) ===== -->
+<div class="page">
+  <img src="assets/image4.png" class="wave-top" alt="">
+  <img src="assets/image2.png" class="logo" alt="">
+  <img src="assets/image3.png" class="wave-bottom" alt="">
+  <div class="content epage" data-ep="p2">
+    <table class="meta">
+      <tr>
+        <td class="k" contenteditable="true">Quotation No:</td>
+        <td class="v" contenteditable="true">SAS/DL/R/1100</td>
+        <td class="d"><span class="dlabel">Date:</span> <span contenteditable="true">19/06/2026</span></td>
+        <td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td>
+      </tr>
+      <tr><td class="k" contenteditable="true">Customer Detail:</td><td class="v" colspan="2" contenteditable="true">&nbsp;</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+      <tr><td class="k" contenteditable="true">Contact No:</td><td class="v" colspan="2" contenteditable="true">&nbsp;</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+      <tr><td class="k" contenteditable="true">State:</td><td class="v" colspan="2" contenteditable="true">&nbsp;</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+      <tr><td class="k" contenteditable="true">Subject:</td><td class="v" colspan="2" contenteditable="true">1000 LPH RO System With Kiosk</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+    </table>
+    <table class="price" id="priceTable">
+      <thead>
+        <tr class="phead"><th contenteditable="true">1000 LPH RO System With Kiosk</th><th class="amt">Price</th><th class="no-print act">—</th></tr>
+      </thead>
+      <tbody>
+        <tr><td contenteditable="true">1000 LPH RO System</td><td class="amt price" contenteditable="true">2,60,000/-</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        <tr><td contenteditable="true">1000 LTR Stainless Steel Chiller</td><td class="amt price" contenteditable="true">1,85,000/-</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        <tr><td contenteditable="true">Water ATM Kiosk MS Structure L10 x W10 x H9 With ACP Sheet With Puff Insulated</td><td class="amt price" contenteditable="true">1,65,000/-</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        <tr><td contenteditable="true">10 by 10 Platform With Tiles</td><td class="amt price" contenteditable="true">65,000/-</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        <tr><td contenteditable="true">Raw Water Tank 1000 Liter x 2 Tanks</td><td class="amt price" contenteditable="true">15,000/-</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        <tr><td contenteditable="true">Plumbing &amp; Electrical Job Upto 20 Meter</td><td class="amt price" contenteditable="true">30,000/-</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        <tr class="total" id="totalRow"><td>Total</td><td class="amt" id="grandTotal" contenteditable="true">7,20,000/-</td><td class="no-print act"><button class="addb" onclick="addRowAfterTotal()" title="Add row below (e.g. Discount)">+</button><button class="del" onclick="delRow(this)" title="Delete row">✕</button></td></tr>
+        <tr class="gst"><td contenteditable="true">GST and Transportation Will Be Extra</td><td class="amt" contenteditable="true"></td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)" title="Add row below">+</button><button class="del" onclick="delRow(this)" title="Delete row">✕</button></td></tr>
+      </tbody>
+    </table>
+    <button class="addrow no-print" onclick="addPriceRow()">+ Add Item Row</button>
+    <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('priceTable'))">▥ Add Column</button>
+    <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('priceTable'),{numbering:true,label:'S.No.',style:'numeric'})">🔢 1,2,3…</button>
+    <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('priceTable'),{numbering:true,label:'S.No.',style:'alpha'})">🔤 A,B,C…</button>
+    <div class="letter">
+      <p contenteditable="true">Dear Sir</p>
+      <p contenteditable="true">This with reference to your discussion held with you regarding your requirement for Water Vending Machine. The capacity of the Water Vending Machine is 1000 LPH. Kindly find below technical details, special features, scope of supply &amp; Commercial offer for your kind consideration.</p>
+      <p contenteditable="true">We trust that you will find the offer interesting and in line with your requirement. In case any additional information is required, kindly let us know. Thanking you and looking forward for your prestigious order.</p>
+      <p contenteditable="true">Please visit our website www.aquasoftro.in for more information</p>
+    </div>
+    <div class="sign">
+      <img src="assets/image11.png" class="regards" alt="">
+      <div class="sname" contenteditable="true">Sarah Aqua Soft</div>
+      <div class="sname" contenteditable="true">Pramod Bajaj</div>
+      <div class="srole" contenteditable="true">Director-Projects</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 3 — COMPANY PROFILE (EDITABLE) ===== -->
+<div class="page">
+  <img src="assets/image4.png" class="wave-top" alt=""><img src="assets/image3.png" class="wave-bottom" alt="">
+  <div class="cp epage" data-ep="p3">
+    <div class="cp-box">
+      <div class="cp-title"><span class="dash"></span><b contenteditable="true">COMPANY</b> <i contenteditable="true">Profile</i><span class="dash"></span></div>
+      <p class="cp-text" contenteditable="true">Sarah Aquasoft is a leading manufacturer of wide range of R.O (Reverse Osmosis) Systems. The company was established in the year 2001, having its registered office in Rajouri Garden, New Delhi. In last 19 years company has registered a steep growth. Our continuous efforts have given us a good market share. At present we have a network of 115 distributors &amp; Services Centers in 300 locations across seven states and is poised to reach</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 4 — WATER VENDING MACHINE (EDITABLE) ===== -->
+<div class="page">
+  <img src="assets/image4.png" class="wave-top" alt=""><img src="assets/image3.png" class="wave-bottom" alt="">
+  <div class="cp epage" data-ep="p4">
+    <div class="cp-box">
+      <div class="cp-title"><span class="dash"></span><b contenteditable="true">WATER VENDING</b> <i contenteditable="true">Machine</i><span class="dash"></span></div>
+      <p class="cp-text" contenteditable="true">Water vending machine or commonly called water ATM is the latest innovation in water trade that has huge potential to grow in the Indian market. We launched this new advanced technology a year back and are gathering immense consumer appeal because of its utility not only in urban markets but even in deep rural markets and villages. It gives clean, healthy drinking water equivalent to Bisleri, Kinley etc. One of our variants is e-rickshaw ATMs, whereby the machine can be transported to and fro any desired location. It is a high profit giving machine that generates handsome return of Rs. 3000 to 4000 per day on very low level of investment. So It has the potential of generating additional employment opportunity to so many people.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 5 — TECHNICAL SPECIFICATION (EDITABLE + photo slot) ===== -->
+<div class="page">
+  <img src="assets/image4.png" class="wave-top" alt=""><img src="assets/image2.png" class="logo" alt=""><img src="assets/image3.png" class="wave-bottom" alt="">
+  <div class="tech epage" data-ep="p5">
+    <div class="tech-photo imgslot">
+      <img src="assets/image14.png" alt="Water ATM">
+      <button class="slot-btn no-print" onclick="replaceImg(this)"><i class="fa-solid fa-image"></i> Replace</button>
+    </div>
+    <div class="tech-right">
+      <table class="techtable" id="techTable">
+        <thead>
+          <tr>
+            <th><span class="th-b" contenteditable="true">1000LPH</span><span class="th-i" contenteditable="true">RO System</span></th>
+            <th><span class="th-b" contenteditable="true">Technical</span><span class="th-i" contenteditable="true">Specification</span></th>
+            <th class="no-print act">—</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td contenteditable="true">RO Capacity</td><td contenteditable="true">1000 Liter per hour</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Water Chiller</td><td contenteditable="true">1000 Liter</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Storage Tank</td><td contenteditable="true">1000 Litter</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Water Capacity/Day</td><td contenteditable="true">10000 Litter per day</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Total Power</td><td contenteditable="true">1.5 KW</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">MOC</td><td contenteditable="true">Stainless Steel</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Dispensing</td><td contenteditable="true">4 Tap</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Warranty</td><td contenteditable="true">1 Year</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Dimension (H*W*D)</td><td contenteditable="true">10 x 10 x 9 Feet</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Weight</td><td contenteditable="true">300 kg Approx</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        </tbody>
+      </table>
+      <button class="addrow no-print" onclick="addTechRow()">+ Add Row</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('techTable'))">▥ Add Column</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('techTable'),{numbering:true,label:'S.No.',style:'numeric'})">🔢 1,2,3…</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('techTable'),{numbering:true,label:'S.No.',style:'alpha'})">🔤 A,B,C…</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 6 — FEATURES (editable text + center machine photo slot) ===== -->
+<div class="page">
+  <img src="assets/image4.png" class="wave-top" alt=""><img src="assets/image2.png" class="logo" alt=""><img src="assets/image3.png" class="wave-bottom" alt="">
+  <div class="feat epage" data-ep="p6">
+    <!-- center machine photo (only this is replaceable) -->
+    <div class="feat-machine imgslot">
+      <img src="assets/machine.png" alt="Water Vending Machine">
+      <button class="ps slot-btn no-print" onclick="replaceImg(this)"><i class="fa-solid fa-image"></i></button>
+    </div>
+    <!-- callouts (editable text) -->
+    <div class="callout c-tl"><i class="fa-solid fa-droplet"></i><span contenteditable="true">TDS reduction by 90-95% Bacteria &amp; Virus reduction by 99.99%.</span><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button></div>
+    <div class="callout c-tr"><i class="fa-solid fa-filter"></i><span contenteditable="true">Filtration + Reverse Osmosis + UV (7 stages)</span><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button></div>
+    <div class="callout c-ml"><i class="fa-solid fa-faucet-drip"></i><span contenteditable="true">Work for Tap Water and Ground water with TDS&lt;2000 ppm</span><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button></div>
+    <div class="callout c-mr"><i class="fa-solid fa-faucet"></i><span contenteditable="true">4 Water TAP</span><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button></div>
+    <div class="callout c-br"><i class="fa-solid fa-cube"></i><span contenteditable="true">ACP Sheet Strong Body</span><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button></div>
+    <!-- bottom bullets (editable) -->
+    <ul class="feat-bullets">
+      <li><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button><span contenteditable="true">Four Dispensing System 300ml to 20 ltr Water</span></li>
+      <li><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button><span contenteditable="true">MS Structure With Out Side ACP Sheet Inner Side ACP Sheet with 40mm Puff Insulated</span></li>
+      <li><button class="rm-ico no-print" data-action="rm-ico" contenteditable="false" title="Remove icon">✕</button><span contenteditable="true">All India Supply, Installation &amp; Servicing</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== PAGE 7 — TECHNICAL DETAILS / ELEMENTS (EDITABLE) ===== -->
+<div class="page">
+  <img src="assets/image4.png" class="wave-top" alt=""><img src="assets/image3.png" class="wave-bottom" alt="">
+  <div class="cp epage" data-ep="p7">
+    <div class="cp-box">
+      <div class="cp-title"><span class="dash"></span><b contenteditable="true">TECHNICAL DETAILS</b> <i contenteditable="true">of 250 LPH</i></div>
+      <table class="eltable" id="elemTable">
+        <thead><tr><th contenteditable="true">ELEMENTS</th><th contenteditable="true">Quantity</th><th class="no-print act">—</th></tr></thead>
+        <tbody>
+          <tr><td contenteditable="true">RW Pump .5 HP</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Pre Filter-Housing Big Blue</td><td contenteditable="true">2</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Filters</td><td contenteditable="true">2</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Low Pressure Switch</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">High Pressure Switch</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">High Pressure Pump (2-9)</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Membrane</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Membrane HSG 40/40</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Flow Meters</td><td contenteditable="true">2</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Pressure Gauge</td><td contenteditable="true">2</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Pannel</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">Fittings upvc</td><td contenteditable="true">1 Lot</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">SS Skid</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+          <tr><td contenteditable="true">½ SV</td><td contenteditable="true">1</td><td class="no-print act"><button class="addb" onclick="addRowBelow(this)">+</button><button class="del" onclick="delRow(this)">✕</button></td></tr>
+        </tbody>
+      </table>
+      <button class="addrow no-print" onclick="addElemRow()">+ Add Row</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('elemTable'))">▥ Add Column</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('elemTable'),{numbering:true,label:'S.No.',style:'numeric'})">🔢 1,2,3…</button>
+      <button class="addrow no-print" onclick="dynAddColumn(document.getElementById('elemTable'),{numbering:true,label:'S.No.',style:'alpha'})">🔤 A,B,C…</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 8 — TERMS & CONDITIONS (EDITABLE) ===== -->
+<div class="page">
+  <img src="assets/image4.png" class="wave-top" alt=""><img src="assets/image3.png" class="wave-bottom" alt="">
+  <div class="cp epage" data-ep="p8">
+    <div class="cp-box">
+      <div class="cp-title big-cursive"><span class="dash"></span><i contenteditable="true">Terms &amp; Conditions</i><span class="dash"></span></div>
+      <div class="terms">
+        <h4 contenteditable="true">Payment Terms :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
+        <ul>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>50% Advance at the time of Order Booking.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>50% at the time of Dispatch against Performa Invoice.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>All taxes extra.</li>
+        </ul>
+        <h4 contenteditable="true">Delivery :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
+        <ul><li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>In approx. two to three weeks from the date of all technical clarifications and freezing of the scope of work and your firm order with advance.</li></ul>
+        <h4 contenteditable="true">Warranty :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
+        <ul>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>12 months from the date of commissioning against any manufacturing defect in the equipment.</li>
+          <li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>Component Subject to wear, such as prefilter candle, activated carbon, Anti Scalent and membrane are not covered under this warranty.</li>
+        </ul>
+        <h4 contenteditable="true">Validity :<button class="terms-delsec no-print" contenteditable="false" data-action="terms-delsec" title="Delete this heading &amp; its rows">✕</button></h4>
+        <ul><li contenteditable="true"><button class="terms-add no-print" contenteditable="false" data-action="terms-addrow" title="Add row below">+</button><button class="terms-del no-print" contenteditable="false" data-action="terms-delrow" title="Delete row">✕</button>Our offer is valid for a period of 30 days from the date.</li></ul>
+        <button class="terms-addsec no-print" data-action="terms-addsec" title="Add a new heading with a row">＋ Add Heading + Row</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGES 9–16 — static design pages (non-editable) ===== -->
+<div class="page"><img class="full" src="assets/pages/page_09.jpg" alt="Page 9"></div>
+<div class="page"><img class="full" src="assets/pages/page_10.jpg" alt="Page 10"></div>
+<div class="page"><img class="full" src="assets/pages/page_11.jpg" alt="Page 11"></div>
+<div class="page"><img class="full" src="assets/pages/page_12.jpg" alt="Page 12"></div>
+<div class="page"><img class="full" src="assets/pages/page_13.jpg" alt="Page 13"></div>
+<div class="page"><img class="full" src="assets/pages/page_14.jpg" alt="Page 14"></div>
+<div class="page"><img class="full" src="assets/pages/page_15.jpg" alt="Page 15"></div>
+<div class="page"><img class="full" src="assets/pages/page_16.jpg" alt="Page 16"></div>
+
+<!-- ============================================================
+     WARRANTY CARD — independent editor (shown via 🛡 Edit Warranty Card)
+     Lives inside pagesWrap so Save / Open / Auto-save all reuse the
+     existing project system. Only customer fields are editable.
+     ============================================================ -->
+<div class="page warranty-page">
+  <div class="wc epage" data-ep="warranty">
+
+    <!-- header (logo + certification — fixed) -->
+    <div class="wc-head">
+      <img class="wc-logo" src="assets/logo-warranty.png" alt="Sarah Aqua Soft">
+      <div class="wc-mfg">Mfg by : An ISO 9001:2015 Certified Co.</div>
+    </div>
+
+    <!-- title (fixed) -->
+    <h1 class="wc-title">Warranty Card</h1>
+    <div class="wc-sub" contenteditable="true">Water Cooler With Water Purifier</div>
+
+    <!-- retain banner (fixed) -->
+    <div class="wc-banner">Please retain this Warranty Card it will be required for service under the Warranty Period</div>
+
+    <!-- customer information (editable) -->
+    <div class="wc-info">
+      <div class="wc-row"><span class="wc-lbl">Firm Name:-</span><span class="wc-val" contenteditable="true">DURGA CONSTRUTION</span></div>
+      <div class="wc-row"><span class="wc-lbl">Customer Name:-</span><span class="wc-val" contenteditable="true">DURGA CONSTRUTION</span></div>
+      <div class="wc-row"><span class="wc-lbl">Address:-</span><span class="wc-val" contenteditable="true">2/202 VISHAL KHAND 2 GOMTI NAGAR UTTAR PRADESH</span></div>
+      <div class="wc-row"><span class="wc-lbl">Installed At:-</span><span class="wc-val" contenteditable="true">KGMU BUILDINGP PROJECT</span></div>
+
+      <div class="wc-grid">
+        <div class="wc-row"><span class="wc-lbl">City:-</span><span class="wc-val" contenteditable="true">LUCKNOW</span></div>
+        <div class="wc-row"><span class="wc-lbl">Pin:-</span><span class="wc-val" contenteditable="true">226020</span></div>
+
+        <div class="wc-row"><span class="wc-lbl">Invoice No:-</span><span class="wc-val" contenteditable="true">KGM-334/MAR/2026</span></div>
+        <div class="wc-row"><span class="wc-lbl">Email:-</span><span class="wc-val" contenteditable="true"></span></div>
+
+        <div class="wc-row"><span class="wc-lbl">Mobile No:-</span><span class="wc-val" contenteditable="true">9304127381</span></div>
+        <div class="wc-row"><span class="wc-lbl">Date Of Supply:-</span><span class="wc-val" contenteditable="true">26/MARCH/2026</span></div>
+
+        <div class="wc-row wc-empty"></div>
+        <div class="wc-row"><span class="wc-lbl">Quantity:-</span><span class="wc-val" contenteditable="true">20 NOS</span></div>
+
+        <div class="wc-row wc-empty"></div>
+        <div class="wc-row"><span class="wc-lbl">Product Name:-</span><span class="wc-val" contenteditable="true">150 LTR Water Cooler with 60 LPH RO System</span></div>
+      </div>
+    </div>
+
+    <!-- service contact box (labels fixed, values editable) -->
+    <div class="wc-service">
+      <div class="wc-service-head">For Service Contact</div>
+      <div class="wc-service-body">
+        <div class="wc-row"><span class="wc-lbl">Service Provider's Name:-</span><span class="wc-val" contenteditable="true">Sarah Aquasoft</span></div>
+        <div class="wc-row"><span class="wc-lbl">Service Provider's Address:-</span><span class="wc-val" contenteditable="true">WZ-106/25-26 Village Tatrpur Colony, Rajouri Garden Extention New Delhi - 110027</span></div>
+        <div class="wc-row"><span class="wc-val" contenteditable="true"></span></div>
+        <div class="wc-row"><span class="wc-lbl">Phone Number:-</span><span class="wc-val" contenteditable="true">01145510557,  9910493828</span></div>
+      </div>
+    </div>
+
+    <!-- warranty conditions 1-10 (fixed) -->
+    <ol class="wc-terms">
+      <li>The customer will notify the Company in writing along with the original Invoice..</li>
+      <li>This is the sole responsibility of the Company to provide satisfactory service to his customer during the warranty period.</li>
+      <li>The customer will deposit the goods in the service center if so required.</li>
+      <li>Inspection and test report of the Company/service center will be final for determining the defects under the warranty</li>
+      <li>The Company/service center will be entitled to retain any defective part replaced under the warranty.</li>
+      <li>Warranty shall be limited to the first sale of the goods by the company to the customer.</li>
+      <li>Consumables such as sediment filter, reverse osmosis membrane and activated carbon filters which are subject to normal wear &amp; tear in course of use are not covered by this warranty.</li>
+      <li>Warranty shall remain valid only if goods are duly installed by the company at the location specified in the invoice.</li>
+      <li>The customer will have no claim against the company in respect of any loss Damage caused by or due to mishandling of the equipment.</li>
+      <li>Repair / Replacement warranty will be carried out only by the dealer from which the system has been purchased.</li>
+    </ol>
+
+  </div>
+</div>
+
+<script src="app.js?v=20260729b"></script>
 </body>
 </html>
